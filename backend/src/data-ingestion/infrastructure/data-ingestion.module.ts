@@ -34,6 +34,9 @@ import { UtilityBillParser } from '../domain/services/utility-bill-parser';
 import { OcrProcessor } from '../application/jobs/ocr.processor';
 
 import { EventBusModule } from '../../shared/event-bus/event-bus.module';
+import { ConsumptionReaderAdapter } from './adapters/consumption-reader.adapter';
+import { SurfaceReaderAdapter } from './adapters/surface-reader.adapter';
+import { CONSUMPTION_READER_PORT, SURFACE_READER_PORT } from '../../shared/types/data-reader.ports';
 
 @Module({
   imports: [
@@ -64,6 +67,12 @@ import { EventBusModule } from '../../shared/event-bus/event-bus.module';
     { provide: OCR_PORT, useClass: TesseractOcrAdapter },
     { provide: SOLAR_API_PORT, useClass: GoogleSolarApiAdapter },
     { provide: BLOB_STORAGE_PORT, useClass: LocalFsBlobStorageAdapter },
+    // Cross-module read ports consumed by ProposalGeneratorModule
+    ConsumptionReaderAdapter,
+    { provide: CONSUMPTION_READER_PORT, useExisting: ConsumptionReaderAdapter },
+    SurfaceReaderAdapter,
+    { provide: SURFACE_READER_PORT, useExisting: SurfaceReaderAdapter },
   ],
+  exports: [CONSUMPTION_READER_PORT, SURFACE_READER_PORT, BLOB_STORAGE_PORT],
 })
 export class DataIngestionModule {}

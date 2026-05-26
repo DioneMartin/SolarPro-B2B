@@ -1,0 +1,10 @@
+import type { RawProposal } from '../../../shared/types/calculation.types';
+import type { Criterion } from './criterion';
+
+export class OrCriterion implements Criterion {
+  constructor(private readonly children: Criterion[]) {}
+
+  matches(p: RawProposal): boolean {
+    return this.children.some(c => c.matches(p));
+  }
+}

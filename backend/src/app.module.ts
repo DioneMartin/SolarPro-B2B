@@ -16,6 +16,7 @@ import { ProjectClientModule } from './project-client/infrastructure/project-cli
 import { UserTenantModule } from './user-tenant/infrastructure/user-tenant.module';
 import { DataIngestionModule } from './data-ingestion/infrastructure/data-ingestion.module';
 import { SolarCalculationModule } from './solar-calculation/infrastructure/solar-calculation.module';
+import { ProposalGeneratorModule } from './proposal-generator/infrastructure/proposal-generator.module';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -40,6 +41,7 @@ import { BullModule } from '@nestjs/bullmq';
     }),
     DataIngestionModule,
     SolarCalculationModule,
+    ProposalGeneratorModule,
   ],
   controllers: [AppController],
   providers: [
