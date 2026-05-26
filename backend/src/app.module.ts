@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AuthModule } from './shared/auth/auth.module';
@@ -14,6 +14,8 @@ import { TenantContextModule } from './shared/tenant-context/tenant-context.modu
 import { CatalogModule } from './catalog/infrastructure/catalog.module';
 import { ProjectClientModule } from './project-client/infrastructure/project-client.module';
 import { UserTenantModule } from './user-tenant/infrastructure/user-tenant.module';
+import { DataIngestionModule } from './data-ingestion/infrastructure/data-ingestion.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -25,6 +27,17 @@ import { UserTenantModule } from './user-tenant/infrastructure/user-tenant.modul
     UserTenantModule,
     ProjectClientModule,
     CatalogModule,
+    DataIngestionModule,
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST') || 'localhost',
+          port: configService.get<number>('REDIS_PORT') || 6380,
+        },
+      }),
+    }),
   ],
   controllers: [AppController],
   providers: [
