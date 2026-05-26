@@ -57,7 +57,7 @@ Folder: `backend/src/data-ingestion/`
 
 The `SurfaceRecord` is **editable** via `PATCH /surface/:id`. Editing publishes a fresh `surface.updated` event so the calculation engine recomputes.
 
-API key: `AIzaSyBB5DBuzag8L6JZLP04qq2YVkk7PpwEKbg` — **stored in `.env`, never committed.** Add to `.env.example` as a placeholder.
+API key: `<REDACTED>` — **stored in `.env`, never committed.** Add to `.env.example` as a placeholder.
 
 ---
 
