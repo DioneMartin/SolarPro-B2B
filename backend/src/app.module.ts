@@ -1,10 +1,38 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { AuthModule } from './shared/auth/auth.module';
+import { JwtAuthGuard } from './shared/auth/jwt-auth.guard';
+import { RolesGuard } from './shared/auth/roles.guard';
+import { DatabaseModule } from './shared/database/database.module';
+import { GlobalExceptionFilter } from './shared/errors/global-exception.filter';
+import { EventBusModule } from './shared/event-bus/event-bus.module';
+import { RedisHealth } from './shared/event-bus/redis.health';
+import { TenantContextInterceptor } from './shared/tenant-context/tenant-context.interceptor';
+import { TenantContextModule } from './shared/tenant-context/tenant-context.module';
+import { CatalogModule } from './catalog/infrastructure/catalog.module';
+import { ProjectClientModule } from './project-client/infrastructure/project-client.module';
+import { UserTenantModule } from './user-tenant/infrastructure/user-tenant.module';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    DatabaseModule,
+    AuthModule,
+    TenantContextModule,
+    EventBusModule,
+    UserTenantModule,
+    ProjectClientModule,
+    CatalogModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    RedisHealth,
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
+  ],
 })
 export class AppModule {}
