@@ -1,4 +1,8 @@
-import { Controller, Post, Body, Param, Get, Patch, Req } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, Patch } from '@nestjs/common';
+import { CurrentUser } from '../../../shared/auth/current-user.decorator';
+import type { JwtPayload } from '../../../shared/auth/jwt-payload';
+import { Roles } from '../../../shared/auth/roles.decorator';
+import { Role } from '../../../shared/auth/role.enum';
 import { LookupSurfaceUseCase } from '../../application/use-cases/lookup-surface.use-case';
 import { OverrideSurfaceUseCase } from '../../application/use-cases/override-surface.use-case';
 import { GetSurfaceUseCase } from '../../application/use-cases/get-surface.use-case';
@@ -12,14 +16,14 @@ export class SurfaceController {
   ) {}
 
   @Post('projects/:projectId/surface/lookup')
+  @Roles(Role.SOLAR_CONSULTANT, Role.INVENTORY_MANAGER)
   async lookup(
     @Param('projectId') projectId: string,
     @Body() body: any,
-    @Req() req: any,
+    @CurrentUser() user: JwtPayload,
   ) {
-    const tenantId = req.user?.tenantId || 'dummy-tenant-id';
     const record = await this.lookupSurface.execute({
-      tenantId,
+      tenantId: user.tenantId,
       projectId,
       address: body.address,
       coords: body.coords,
@@ -30,10 +34,9 @@ export class SurfaceController {
   @Get('surface/:id')
   async getRecord(
     @Param('id') id: string,
-    @Req() req: any,
+    @CurrentUser() user: JwtPayload,
   ) {
-    const tenantId = req.user?.tenantId || 'dummy-tenant-id';
-    const record = await this.getSurface.execute(id, tenantId);
+    const record = await this.getSurface.execute(id, user.tenantId);
     return {
       id: record.id,
       usableSqMeters: record.estimatedUsableSqMeters,
@@ -42,15 +45,15 @@ export class SurfaceController {
   }
 
   @Patch('surface/:id')
+  @Roles(Role.SOLAR_CONSULTANT, Role.INVENTORY_MANAGER)
   async overrideUsableArea(
     @Param('id') id: string,
     @Body() body: any,
-    @Req() req: any,
+    @CurrentUser() user: JwtPayload,
   ) {
-    const tenantId = req.user?.tenantId || 'dummy-tenant-id';
     const record = await this.overrideSurface.execute({
       id,
-      tenantId,
+      tenantId: user.tenantId,
       usableSqMeters: body.usableSqMeters,
     });
     return { id: record.id, usableSqMeters: record.estimatedUsableSqMeters };

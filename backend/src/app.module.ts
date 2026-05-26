@@ -15,6 +15,7 @@ import { CatalogModule } from './catalog/infrastructure/catalog.module';
 import { ProjectClientModule } from './project-client/infrastructure/project-client.module';
 import { UserTenantModule } from './user-tenant/infrastructure/user-tenant.module';
 import { DataIngestionModule } from './data-ingestion/infrastructure/data-ingestion.module';
+import { SolarCalculationModule } from './solar-calculation/infrastructure/solar-calculation.module';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -27,7 +28,6 @@ import { BullModule } from '@nestjs/bullmq';
     UserTenantModule,
     ProjectClientModule,
     CatalogModule,
-    DataIngestionModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -38,6 +38,8 @@ import { BullModule } from '@nestjs/bullmq';
         },
       }),
     }),
+    DataIngestionModule,
+    SolarCalculationModule,
   ],
   controllers: [AppController],
   providers: [

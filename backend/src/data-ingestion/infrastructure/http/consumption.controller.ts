@@ -1,5 +1,9 @@
-import { Controller, Post, Body, Param, Get, Patch, UseInterceptors, UploadedFile, Req, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, Patch, UseInterceptors, UploadedFile, HttpCode } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CurrentUser } from '../../../shared/auth/current-user.decorator';
+import type { JwtPayload } from '../../../shared/auth/jwt-payload';
+import { Roles } from '../../../shared/auth/roles.decorator';
+import { Role } from '../../../shared/auth/role.enum';
 import { RecordManualConsumptionUseCase } from '../../application/use-cases/record-manual-consumption.use-case';
 import { UploadAndExtractConsumptionUseCase } from '../../application/use-cases/upload-and-extract-consumption.use-case';
 import { UpdateConsumptionUseCase } from '../../application/use-cases/update-consumption.use-case';
@@ -15,14 +19,14 @@ export class ConsumptionController {
   ) {}
 
   @Post('projects/:projectId/consumption/manual')
+  @Roles(Role.SOLAR_CONSULTANT, Role.INVENTORY_MANAGER)
   async recordManualConsumption(
     @Param('projectId') projectId: string,
     @Body() body: any,
-    @Req() req: any,
+    @CurrentUser() user: JwtPayload,
   ) {
-    const tenantId = req.user?.tenantId || 'dummy-tenant-id';
     const result = await this.recordManual.execute({
-      tenantId,
+      tenantId: user.tenantId,
       projectId,
       months: body.months,
     });
@@ -31,15 +35,15 @@ export class ConsumptionController {
 
   @Post('projects/:projectId/consumption/upload')
   @HttpCode(202)
+  @Roles(Role.SOLAR_CONSULTANT, Role.INVENTORY_MANAGER)
   @UseInterceptors(FileInterceptor('file'))
   async uploadConsumption(
     @Param('projectId') projectId: string,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any,
+    @CurrentUser() user: JwtPayload,
   ) {
-    const tenantId = req.user?.tenantId || 'dummy-tenant-id';
     const result = await this.uploadExtract.execute({
-      tenantId,
+      tenantId: user.tenantId,
       projectId,
       fileBuffer: file.buffer,
       mimeType: file.mimetype,
@@ -50,10 +54,9 @@ export class ConsumptionController {
   @Get('consumption/:id')
   async getRecord(
     @Param('id') id: string,
-    @Req() req: any,
+    @CurrentUser() user: JwtPayload,
   ) {
-    const tenantId = req.user?.tenantId || 'dummy-tenant-id';
-    const record = await this.getConsumption.execute(id, tenantId);
+    const record = await this.getConsumption.execute(id, user.tenantId);
     return {
       id: record.id,
       status: record.status,
@@ -62,15 +65,15 @@ export class ConsumptionController {
   }
 
   @Patch('consumption/:id')
+  @Roles(Role.SOLAR_CONSULTANT, Role.INVENTORY_MANAGER)
   async updateRecord(
     @Param('id') id: string,
     @Body() body: any,
-    @Req() req: any,
+    @CurrentUser() user: JwtPayload,
   ) {
-    const tenantId = req.user?.tenantId || 'dummy-tenant-id';
     const record = await this.update.execute({
       id,
-      tenantId,
+      tenantId: user.tenantId,
       months: body.months,
     });
     return { id: record.id, status: record.status };

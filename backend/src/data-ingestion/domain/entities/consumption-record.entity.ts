@@ -98,7 +98,7 @@ export class ConsumptionRecord {
   }
 
   isValidForCalculation(): boolean {
-    return this._months.length >= 3 && this._status === ConsumptionStatus.READY;
+    return this._months.length >= 3;
   }
 
   updateMonths(months: MonthlyKwh[]): void {
