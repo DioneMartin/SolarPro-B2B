@@ -25,33 +25,43 @@ function PoliciesTab() {
     initialValues: {
       projectId: '',
       strategyKind: 'TIME_BASED' as string,
-      name: '',
-      // TIME_BASED config
-      schedule: 'QUARTERLY' as string,
-      // WEATHER_BASED config
-      maxTempC: 40,
-      minTempC: -10,
-      maxWindKph: 80,
-      maxAqiUs: 150,
-      maxPollenIndex: 3,
+      // WEATHER_BASED fields
+      lat: 0,
+      lon: 0,
+      windGustKmhAbove: 80,
+      rainMmInDayAbove: 50,
+      aqiAbove: 150,
+      pollenAbove: 3,
+      pollIntervalMinutes: 60,
     },
   });
 
   const { mutate: create, isPending } = useMutation({
     mutationFn: (v: typeof form.values) => {
-      const config = v.strategyKind === 'TIME_BASED'
-        ? { schedule: v.schedule }
-        : {
-            maxTempC: v.maxTempC,
-            minTempC: v.minTempC,
-            maxWindKph: v.maxWindKph,
-            maxAqiUs: v.maxAqiUs,
-            maxPollenIndex: v.maxPollenIndex,
-          };
+      let config: any;
+      if (v.strategyKind === 'TIME_BASED') {
+        // Default schedule: quarterly panel cleaning + annual inverter check
+        config = {
+          schedule: [
+            { kind: 'PANEL_CLEANING', cron: '0 9 1 */3 *', leadDays: 7 },
+            { kind: 'INVERTER_CHECK', cron: '0 9 1 1 *', leadDays: 14 },
+          ],
+        };
+      } else {
+        config = {
+          coords: { lat: v.lat, lon: v.lon },
+          thresholds: {
+            windGustKmhAbove: v.windGustKmhAbove,
+            rainMmInDayAbove: v.rainMmInDayAbove,
+            aqiAbove: v.aqiAbove,
+            pollenAbove: v.pollenAbove,
+          },
+          pollIntervalMinutes: v.pollIntervalMinutes,
+        };
+      }
       return alertsApi.policies.create({
-        projectId: v.projectId || undefined,
+        projectId: v.projectId,
         strategyKind: v.strategyKind,
-        name: v.name,
         config,
       });
     },
@@ -75,7 +85,6 @@ function PoliciesTab() {
       <Table striped highlightOnHover withTableBorder>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>Name</Table.Th>
             <Table.Th>Strategy</Table.Th>
             <Table.Th>Project</Table.Th>
             <Table.Th>Enabled</Table.Th>
@@ -85,7 +94,6 @@ function PoliciesTab() {
         <Table.Tbody>
           {policies.map((p: any) => (
             <Table.Tr key={p.id}>
-              <Table.Td>{p.name}</Table.Td>
               <Table.Td><Badge size="sm">{p.strategyKind}</Badge></Table.Td>
               <Table.Td>{p.projectId ? p.projectId.slice(0, 8) + '…' : '(all)'}</Table.Td>
               <Table.Td>
@@ -95,7 +103,12 @@ function PoliciesTab() {
                 />
               </Table.Td>
               <Table.Td>
-                <Button size="xs" variant="subtle" color="red">Delete</Button>
+                <Button
+                  size="xs" variant="subtle" color="red"
+                  onClick={() => toggle({ id: p.id, enabled: true })}
+                >
+                  Disable
+                </Button>
               </Table.Td>
             </Table.Tr>
           ))}
@@ -105,8 +118,12 @@ function PoliciesTab() {
       <Modal opened={opened} onClose={close} title="New Alert Policy" size="md">
         <form onSubmit={form.onSubmit((v) => create(v))}>
           <Stack>
-            <TextInput label="Policy name" required {...form.getInputProps('name')} />
-            <TextInput label="Project ID (leave blank for all)" {...form.getInputProps('projectId')} />
+            <TextInput
+              label="Project ID"
+              description="The project must be in APPROVED status"
+              required
+              {...form.getInputProps('projectId')}
+            />
             <Select
               label="Strategy"
               data={[
@@ -117,25 +134,38 @@ function PoliciesTab() {
             />
 
             {form.values.strategyKind === 'TIME_BASED' && (
-              <Select
-                label="Schedule"
-                data={[
-                  { value: 'QUARTERLY', label: 'Quarterly' },
-                  { value: 'ANNUALLY', label: 'Annually' },
-                ]}
-                {...form.getInputProps('schedule')}
-              />
+              <Text size="xs" c="dimmed">
+                Default schedule: quarterly panel cleaning + annual inverter check.
+                Edit the policy config after creation for custom cron schedules.
+              </Text>
             )}
 
             {form.values.strategyKind === 'WEATHER_BASED' && (
               <Stack>
+                <Text size="xs" c="dimmed">
+                  Monitors weather conditions at the project site.
+                  Fires an alert when thresholds are exceeded.
+                </Text>
                 <Group grow>
-                  <NumberInput label="Max Temp (°C)" {...form.getInputProps('maxTempC')} />
-                  <NumberInput label="Min Temp (°C)" {...form.getInputProps('minTempC')} />
+                  <NumberInput label="Site latitude" decimalScale={6} required
+                    {...form.getInputProps('lat')} />
+                  <NumberInput label="Site longitude" decimalScale={6} required
+                    {...form.getInputProps('lon')} />
                 </Group>
-                <NumberInput label="Max Wind (km/h)" {...form.getInputProps('maxWindKph')} />
-                <NumberInput label="Max AQI (US)" {...form.getInputProps('maxAqiUs')} />
-                <NumberInput label="Max Pollen Index" min={0} max={5} {...form.getInputProps('maxPollenIndex')} />
+                <Group grow>
+                  <NumberInput label="Wind gust above (km/h)" min={0}
+                    {...form.getInputProps('windGustKmhAbove')} />
+                  <NumberInput label="Rain above (mm/day)" min={0}
+                    {...form.getInputProps('rainMmInDayAbove')} />
+                </Group>
+                <Group grow>
+                  <NumberInput label="AQI above (US)" min={0}
+                    {...form.getInputProps('aqiAbove')} />
+                  <NumberInput label="Pollen index above" min={0} max={5}
+                    {...form.getInputProps('pollenAbove')} />
+                </Group>
+                <NumberInput label="Poll interval (minutes)" min={15} max={1440}
+                  {...form.getInputProps('pollIntervalMinutes')} />
               </Stack>
             )}
 
@@ -169,20 +199,10 @@ function EventsTab() {
   return (
     <Stack>
       <Group>
-        <Button
-          variant={filter === 'unack' ? 'filled' : 'outline'}
-          size="xs"
-          onClick={() => setFilter('unack')}
-        >
-          Unacknowledged
-        </Button>
-        <Button
-          variant={filter === 'all' ? 'filled' : 'outline'}
-          size="xs"
-          onClick={() => setFilter('all')}
-        >
-          All Events
-        </Button>
+        <Button variant={filter === 'unack' ? 'filled' : 'outline'} size="xs"
+          onClick={() => setFilter('unack')}>Unacknowledged</Button>
+        <Button variant={filter === 'all' ? 'filled' : 'outline'} size="xs"
+          onClick={() => setFilter('all')}>All Events</Button>
       </Group>
 
       {events.length === 0 ? (
@@ -193,7 +213,6 @@ function EventsTab() {
             <Table.Tr>
               <Table.Th>Time</Table.Th>
               <Table.Th>Project</Table.Th>
-              <Table.Th>Policy</Table.Th>
               <Table.Th>Severity</Table.Th>
               <Table.Th>Title</Table.Th>
               <Table.Th>Status</Table.Th>
@@ -205,11 +224,8 @@ function EventsTab() {
               <Table.Tr key={e.id}>
                 <Table.Td>{new Date(e.firedAt).toLocaleString()}</Table.Td>
                 <Table.Td>{e.projectId ? e.projectId.slice(0, 8) + '…' : '—'}</Table.Td>
-                <Table.Td>{e.policyId.slice(0, 8)}…</Table.Td>
                 <Table.Td>
-                  <Badge color={SEVERITY_COLORS[e.severity] ?? 'gray'} size="sm">
-                    {e.severity}
-                  </Badge>
+                  <Badge color={SEVERITY_COLORS[e.severity] ?? 'gray'} size="sm">{e.severity}</Badge>
                 </Table.Td>
                 <Table.Td>{e.title}</Table.Td>
                 <Table.Td>
@@ -219,9 +235,7 @@ function EventsTab() {
                 </Table.Td>
                 <Table.Td>
                   {!e.acknowledgedAt && (
-                    <Button size="xs" variant="light" onClick={() => ack(e.id)}>
-                      Acknowledge
-                    </Button>
+                    <Button size="xs" variant="light" onClick={() => ack(e.id)}>Acknowledge</Button>
                   )}
                 </Table.Td>
               </Table.Tr>
@@ -237,7 +251,6 @@ export function AlertsPage() {
   return (
     <Stack>
       <Title order={2}>Alerts</Title>
-
       <Tabs defaultValue="events">
         <Tabs.List>
           <Tabs.Tab value="events">Events</Tabs.Tab>

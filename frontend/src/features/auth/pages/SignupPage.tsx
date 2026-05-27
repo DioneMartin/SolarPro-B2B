@@ -8,7 +8,7 @@ export function SignupPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const form = useForm({
-    initialValues: { tenantName: '', slug: '', adminEmail: '', adminDisplayName: '', adminPassword: '' },
+    initialValues: { tenantName: '', slug: '', adminEmail: '', adminFullName: '', adminPassword: '' },
     validate: {
       slug: (v) => /^[a-z0-9-]{2,}$/.test(v) ? null : 'Lowercase letters, digits and hyphens only (min 2 chars)',
       adminPassword: (v) => v.length >= 12 ? null : 'Minimum 12 characters',
@@ -34,7 +34,7 @@ export function SignupPage() {
             <TextInput label="Company name" placeholder="Acme Solar" {...form.getInputProps('tenantName')} required />
             <TextInput label="Slug (URL identifier)" placeholder="acme-solar" {...form.getInputProps('slug')} required />
             <TextInput label="Admin email" placeholder="admin@acme.com" {...form.getInputProps('adminEmail')} required />
-            <TextInput label="Admin display name" placeholder="Jane Doe" {...form.getInputProps('adminDisplayName')} required />
+            <TextInput label="Admin full name" placeholder="Jane Doe" {...form.getInputProps('adminFullName')} required />
             <PasswordInput label="Admin password" placeholder="Min 12 characters" {...form.getInputProps('adminPassword')} required />
             <Button type="submit" fullWidth mt="sm">Create account</Button>
           </Stack>

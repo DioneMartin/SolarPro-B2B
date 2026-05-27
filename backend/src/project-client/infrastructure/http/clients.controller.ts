@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { CurrentUser } from '../../../shared/auth/current-user.decorator';
 import type { JwtPayload } from '../../../shared/auth/jwt-payload';
+import { Roles } from '../../../shared/auth/roles.decorator';
+import { Role } from '../../../shared/auth/role.enum';
 import { CreateClientUseCase } from '../../application/use-cases/create-client.use-case';
 import { GetClientUseCase } from '../../application/use-cases/get-client.use-case';
 import { ListClientsUseCase } from '../../application/use-cases/list-clients.use-case';
@@ -9,6 +11,7 @@ import { CreateClientRequestDto } from './dto/create-client.request.dto';
 import { UpdateClientRequestDto } from './dto/update-client.request.dto';
 
 @Controller('clients')
+@Roles(Role.SOLAR_CONSULTANT)
 export class ClientsController {
   constructor(
     private readonly createClient: CreateClientUseCase,

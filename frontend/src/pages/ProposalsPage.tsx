@@ -7,10 +7,9 @@ import { proposalsApi } from '../features/proposals/api';
 export function ProposalsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  // Global proposals list — no projectId filter (show all tenant proposals)
   const { data: proposals = [], isLoading } = useQuery({
     queryKey: ['proposals', 'all'],
-    queryFn: () => proposalsApi.list(''),   // backend /projects//proposals won't work — placeholder
+    queryFn: () => proposalsApi.listAll(),
   });
 
   if (isLoading) return <Center h={300}><Loader /></Center>;

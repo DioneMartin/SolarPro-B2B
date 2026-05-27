@@ -61,6 +61,14 @@ export class TypeOrmProposalRepository implements ProposalRepository {
     return orms.map(o => this.toDomain(o));
   }
 
+  async findByTenantId(tenantId: string): Promise<Proposal[]> {
+    const orms = await this.ormRepo.find({
+      where: { tenantId },
+      order: { createdAt: 'DESC' },
+    });
+    return orms.map(o => this.toDomain(o));
+  }
+
   async delete(id: string, tenantId: string): Promise<void> {
     await this.ormRepo.delete({ id, tenantId });
   }

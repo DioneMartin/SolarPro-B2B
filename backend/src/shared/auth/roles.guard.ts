@@ -29,6 +29,10 @@ export class RolesGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenError('No authenticated user');
     }
+    // TENANT_ADMIN is the company owner — always has full access
+    if (user.role === Role.TENANT_ADMIN) {
+      return true;
+    }
     if (!required.includes(user.role)) {
       throw new ForbiddenError(
         `Role ${user.role} is not permitted (requires: ${required.join(', ')})`,

@@ -10,7 +10,9 @@ import { CatalogPage } from '../pages/CatalogPage';
 import { ProposalsPage } from '../pages/ProposalsPage';
 import { AlertsPage } from '../pages/AlertsPage';
 import { SettingsPage } from '../pages/SettingsPage';
+import { UsersPage } from '../pages/UsersPage';
 import { RequireAuth } from './RequireAuth';
+import { RequireRole } from './RequireRole';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -25,6 +27,7 @@ export const router = createBrowserRouter([
       { path: 'catalog', element: <CatalogPage /> },
       { path: 'proposals', element: <ProposalsPage /> },
       { path: 'alerts', element: <AlertsPage /> },
+      { path: 'users', element: <RequireRole roles={['TENANT_ADMIN']}><UsersPage /></RequireRole> },
       { path: 'settings', element: <SettingsPage /> },
     ],
   },

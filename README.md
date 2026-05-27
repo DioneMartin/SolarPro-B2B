@@ -129,6 +129,8 @@ git push origin feature/your-feature-name
 
 This project strictly follows **Clean Architecture** principles. When working on the backend, always respect the *dependency rule*: **inner layers cannot depend on outer layers**.
 
+> **Full design documentation lives in [docs/](docs/README.md)** — start with [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), then [docs/CLEAN_ARCHITECTURE.md](docs/CLEAN_ARCHITECTURE.md), then the per-service plans in [docs/plans/](docs/plans/).
+
 ```
 ┌─────────────────────────────────────┐
 │    Domain Layer                     │

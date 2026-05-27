@@ -77,6 +77,11 @@ export class ProposalsController {
     });
   }
 
+  @Get('proposals')
+  async listAll(@CurrentUser() user: JwtPayload) {
+    return this.list.executeAll(user.tenantId);
+  }
+
   @Get('projects/:projectId/proposals')
   async listProposals(
     @Param('projectId') projectId: string,

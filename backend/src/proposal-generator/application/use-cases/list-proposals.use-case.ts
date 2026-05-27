@@ -13,4 +13,8 @@ export class ListProposalsUseCase {
   async execute(projectId: string, tenantId: string): Promise<Proposal[]> {
     return this.repo.findByProjectId(projectId, tenantId);
   }
+
+  async executeAll(tenantId: string): Promise<Proposal[]> {
+    return this.repo.findByTenantId(tenantId);
+  }
 }

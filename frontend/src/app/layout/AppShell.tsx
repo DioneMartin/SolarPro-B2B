@@ -1,4 +1,4 @@
-import { AppShell as MantineAppShell, Navbar, NavLink, Group, Text, Burger, useMantineTheme, Badge, ActionIcon } from '@mantine/core';
+import { AppShell as MantineAppShell, NavLink, Group, Text, Burger, Badge, ActionIcon } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/auth/AuthContext';
@@ -7,11 +7,12 @@ import { useQuery } from '@tanstack/react-query';
 import { alertsApi } from '../../features/alerts/api';
 
 const navItems = [
-  { label: 'Dashboard', path: '/', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT', 'OPERATIONS'] },
+  { label: 'Dashboard', path: '/', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT', 'OPERATIONS', 'INVENTORY_MANAGER'] },
   { label: 'Clients', path: '/clients', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
   { label: 'Catalog', path: '/catalog', roles: ['TENANT_ADMIN', 'INVENTORY_MANAGER'] },
   { label: 'Proposals', path: '/proposals', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
   { label: 'Alerts', path: '/alerts', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT', 'OPERATIONS'] },
+  { label: 'Team', path: '/users', roles: ['TENANT_ADMIN'] },
   { label: 'Settings', path: '/settings', roles: ['TENANT_ADMIN'] },
 ] as const;
 

@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { CurrentUser } from '../../../shared/auth/current-user.decorator';
 import type { JwtPayload } from '../../../shared/auth/jwt-payload';
+import { Roles } from '../../../shared/auth/roles.decorator';
+import { Role } from '../../../shared/auth/role.enum';
 import { AttachConsumptionUseCase, AttachSurfaceUseCase } from '../../application/use-cases/attach-data.use-case';
 import { CreateProjectUseCase } from '../../application/use-cases/create-project.use-case';
 import { GetProjectUseCase } from '../../application/use-cases/get-project.use-case';
@@ -10,6 +12,7 @@ import { ProjectStatus } from '../../domain/value-objects/project-status.enum';
 import { CreateProjectRequestDto } from './dto/create-project.request.dto';
 
 @Controller('projects')
+@Roles(Role.SOLAR_CONSULTANT)
 export class ProjectsController {
   constructor(
     private readonly createProject: CreateProjectUseCase,

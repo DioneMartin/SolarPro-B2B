@@ -11,7 +11,7 @@ export function ProposalsTable({ projectId }: Props) {
   const qc = useQueryClient();
   const { data: proposals = [], isLoading } = useQuery({
     queryKey: ['proposals', projectId],
-    queryFn: () => proposalsApi.list(projectId),
+    queryFn: () => proposalsApi.listByProject(projectId),
   });
 
   const { mutate: exportPdf, isPending: exporting } = useMutation({

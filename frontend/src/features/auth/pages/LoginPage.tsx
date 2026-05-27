@@ -7,7 +7,7 @@ import { useAuth } from '../../../shared/auth/AuthContext';
 export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const form = useForm({ initialValues: { email: '', password: '' } });
+  const form = useForm({ initialValues: { tenantSlug: '', email: '', password: '' } });
 
   const handleSubmit = form.onSubmit(async (values) => {
     try {
@@ -26,6 +26,7 @@ export function LoginPage() {
       <Paper withBorder p="xl" radius="md">
         <form onSubmit={handleSubmit}>
           <Stack>
+            <TextInput label="Company slug" placeholder="acme-solar" {...form.getInputProps('tenantSlug')} required />
             <TextInput label="Email" placeholder="you@company.com" {...form.getInputProps('email')} required />
             <PasswordInput label="Password" placeholder="Your password" {...form.getInputProps('password')} required />
             <Button type="submit" fullWidth mt="sm">Sign in</Button>
