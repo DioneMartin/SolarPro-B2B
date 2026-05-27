@@ -5,5 +5,6 @@ export interface UserOutput {
   role: string;
   status: string;
   tenantId: string;
+  tenantName?: string;
   createdAt: Date;
 }

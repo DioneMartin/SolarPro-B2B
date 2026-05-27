@@ -6,5 +6,6 @@ export interface AuthResultOutput {
     fullName: string;
     role: string;
     tenantId: string;
+    tenantName: string;
   };
 }

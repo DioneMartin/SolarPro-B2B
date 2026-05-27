@@ -11,7 +11,7 @@ const navItems = [
   { label: 'Clients', path: '/clients', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
   { label: 'Catalog', path: '/catalog', roles: ['TENANT_ADMIN', 'INVENTORY_MANAGER'] },
   { label: 'Proposals', path: '/proposals', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
-  { label: 'Alerts', path: '/alerts', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT', 'OPERATIONS'] },
+  { label: 'Alerts', path: '/alerts', roles: ['TENANT_ADMIN', 'OPERATIONS'] },
   { label: 'Team', path: '/users', roles: ['TENANT_ADMIN'] },
   { label: 'Settings', path: '/settings', roles: ['TENANT_ADMIN'] },
 ] as const;
@@ -22,11 +22,12 @@ export function AppShellLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const canSeeAlertEvents = !!user && (user.role === 'TENANT_ADMIN' || user.role === 'OPERATIONS');
   const { data: unackEvents } = useQuery({
     queryKey: ['alerts', 'events', 'unack'],
     queryFn: () => alertsApi.events.list({ acknowledged: false }),
     refetchInterval: 60_000,
-    enabled: !!user,
+    enabled: canSeeAlertEvents,
   });
   const unackCount = unackEvents?.length ?? 0;
 
@@ -41,6 +42,7 @@ export function AppShellLayout() {
           <Group>
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
             <Text fw={700} size="lg" c="blue">SolarPro</Text>
+            {user?.tenantName && <Text size="sm" c="dimmed">· {user.tenantName}</Text>}
           </Group>
           <Group>
             {unackCount > 0 && (
@@ -48,7 +50,7 @@ export function AppShellLayout() {
                 {unackCount} alert{unackCount !== 1 ? 's' : ''}
               </Badge>
             )}
-            <Text size="sm" c="dimmed">{user?.displayName}</Text>
+            <Text size="sm" c="dimmed">{user?.email}</Text>
             <ActionIcon variant="subtle" onClick={logout} title="Logout">
               <span>↩</span>
             </ActionIcon>

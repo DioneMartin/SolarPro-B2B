@@ -9,7 +9,7 @@ export function SettingsPage() {
 
   const profileForm = useForm({
     initialValues: {
-      name: user?.displayName ?? '',
+      name: user?.fullName ?? '',
       email: user?.email ?? '',
     },
   });
@@ -18,7 +18,7 @@ export function SettingsPage() {
     initialValues: { currentPassword: '', newPassword: '', confirm: '' },
     validate: {
       confirm: (v, vals) => v !== vals.newPassword ? 'Passwords do not match' : null,
-      newPassword: (v) => v.length < 8 ? 'At least 8 characters' : null,
+      newPassword: (v) => v.length < 12 ? 'At least 12 characters' : null,
     },
   });
 

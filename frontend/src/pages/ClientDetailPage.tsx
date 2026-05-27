@@ -27,12 +27,16 @@ export function ClientDetailPage() {
   });
 
   const form = useForm({
-    initialValues: { name: '', address: '', energyDemandTargetPct: 80 },
-    validate: { energyDemandTargetPct: (v) => (v >= 1 && v <= 200) ? null : '1–200' },
+    initialValues: { name: '', siteAddress: '', reference: '' },
   });
 
   const { mutate: createProject, isPending } = useMutation({
-    mutationFn: (vals: any) => projectsApi.create({ ...vals, clientId }),
+    mutationFn: (vals: typeof form.values) => projectsApi.create({
+      clientId,
+      name: vals.name,
+      siteAddress: { street: vals.siteAddress, city: '', state: '', country: '' },
+      energyDemandTargetPct: 80,
+    }),
     onSuccess: (p) => { qc.invalidateQueries({ queryKey: ['projects'] }); close(); navigate(`/projects/${p.id}`); },
   });
 
@@ -44,7 +48,7 @@ export function ClientDetailPage() {
         <Button variant="subtle" onClick={() => navigate('/clients')}>← Clients</Button>
       </Group>
       <Title order={2}>{client?.displayName}</Title>
-      <Text c="dimmed">{client?.contactEmail} · {client?.address?.city}</Text>
+      <Text c="dimmed">{client?.contactEmail} · {client?.primaryAddress?.city}</Text>
 
       <Group justify="space-between" mt="md">
         <Title order={4}>Projects</Title>
@@ -72,9 +76,8 @@ export function ClientDetailPage() {
         <form onSubmit={form.onSubmit((v) => createProject(v))}>
           <Stack>
             <TextInput label="Project name" required {...form.getInputProps('name')} />
-            <TextInput label="Site address" {...form.getInputProps('address')} />
-            <NumberInput label="Energy demand target %" min={1} max={200}
-              {...form.getInputProps('energyDemandTargetPct')} />
+            <TextInput label="Site address" placeholder="Street, city, state" {...form.getInputProps('siteAddress')} />
+            <TextInput label="Reference" placeholder="Internal reference or notes" {...form.getInputProps('reference')} />
             <Button type="submit" loading={isPending}>Create</Button>
           </Stack>
         </form>

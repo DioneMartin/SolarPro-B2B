@@ -45,7 +45,7 @@ export class LoginUseCase {
 
     return {
       accessToken: token,
-      user: { id: user.id, email: user.email.value, fullName: user.fullName, role: user.role, tenantId: user.tenantId },
+      user: { id: user.id, email: user.email.value, fullName: user.fullName, role: user.role, tenantId: user.tenantId, tenantName: tenant.name },
     };
   }
 }

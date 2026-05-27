@@ -18,7 +18,7 @@ export function ClientsPage() {
   const form = useForm({
     initialValues: {
       displayName: '', kind: 'PERSON', contactEmail: '', contactPhone: '',
-      address: { street: '', city: '', state: '', postalCode: '', country: 'MX', latitude: 0, longitude: 0 },
+      primaryAddress: { street: '', city: '', state: '', zipCode: '', country: 'MX' },
     },
   });
 
@@ -49,7 +49,7 @@ export function ClientsPage() {
               <Table.Td><Text fw={500}>{c.displayName}</Text></Table.Td>
               <Table.Td><Badge variant="light">{c.kind}</Badge></Table.Td>
               <Table.Td>{c.contactEmail}</Table.Td>
-              <Table.Td>{c.address?.city}</Table.Td>
+              <Table.Td>{c.primaryAddress?.city}</Table.Td>
             </Table.Tr>
           ))}
         </Table.Tbody>
@@ -62,10 +62,10 @@ export function ClientsPage() {
             <Select label="Kind" data={['PERSON', 'COMPANY']} {...form.getInputProps('kind')} />
             <TextInput label="Contact email" {...form.getInputProps('contactEmail')} />
             <TextInput label="Contact phone" {...form.getInputProps('contactPhone')} />
-            <TextInput label="Street" {...form.getInputProps('address.street')} />
-            <TextInput label="City" {...form.getInputProps('address.city')} />
-            <TextInput label="State" {...form.getInputProps('address.state')} />
-            <TextInput label="Postal code" {...form.getInputProps('address.postalCode')} />
+            <TextInput label="Street" {...form.getInputProps('primaryAddress.street')} />
+            <TextInput label="City" {...form.getInputProps('primaryAddress.city')} />
+            <TextInput label="State" {...form.getInputProps('primaryAddress.state')} />
+            <TextInput label="Zip code" {...form.getInputProps('primaryAddress.zipCode')} />
             <Button type="submit" loading={isPending}>Create</Button>
           </Stack>
         </form>

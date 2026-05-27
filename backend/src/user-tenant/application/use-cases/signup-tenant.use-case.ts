@@ -57,7 +57,7 @@ export class SignupTenantUseCase {
 
     return {
       accessToken: token,
-      user: { id: admin.id, email: admin.email.value, fullName: admin.fullName, role: admin.role, tenantId: admin.tenantId },
+      user: { id: admin.id, email: admin.email.value, fullName: admin.fullName, role: admin.role, tenantId: admin.tenantId, tenantName: tenant.name },
     };
   }
 }

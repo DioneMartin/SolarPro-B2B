@@ -14,12 +14,13 @@ const severityColors: Record<string, string> = {
 };
 
 export function AlertsSocket() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
+  const canSeeAlerts = user?.role === 'TENANT_ADMIN' || user?.role === 'OPERATIONS';
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !canSeeAlerts) return;
     const token = tokenStore.get();
     if (!token) return;
 
@@ -41,7 +42,7 @@ export function AlertsSocket() {
 
     socketRef.current = socket;
     return () => { socket.disconnect(); };
-  }, [isAuthenticated, queryClient]);
+  }, [isAuthenticated, canSeeAlerts, queryClient]);
 
   return null;
 }

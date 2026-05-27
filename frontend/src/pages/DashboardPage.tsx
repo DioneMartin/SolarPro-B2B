@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { projectsApi } from '../features/projects/api';
 import { alertsApi } from '../features/alerts/api';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../shared/auth/AuthContext';
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -15,6 +16,9 @@ function StatCard({ label, value, color }: { label: string; value: number; color
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canSeeAlertEvents = user?.role === 'TENANT_ADMIN' || user?.role === 'OPERATIONS';
+
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: projectsApi.dashboard,
@@ -23,6 +27,7 @@ export function DashboardPage() {
     queryKey: ['alerts', 'events', 'unack'],
     queryFn: () => alertsApi.events.list({ acknowledged: false }),
     refetchInterval: 30_000,
+    enabled: canSeeAlertEvents,
   });
 
   if (isLoading) return <Center h={300}><Loader /></Center>;

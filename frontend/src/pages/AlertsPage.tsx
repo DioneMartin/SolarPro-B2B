@@ -7,6 +7,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from '@mantine/form';
 import { alertsApi } from '../features/alerts/api';
+import { useAuth } from '../shared/auth/AuthContext';
 
 const SEVERITY_COLORS: Record<string, string> = {
   LOW: 'gray', MEDIUM: 'yellow', HIGH: 'orange', CRITICAL: 'red',
@@ -14,6 +15,8 @@ const SEVERITY_COLORS: Record<string, string> = {
 
 function PoliciesTab() {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const canManage = user?.role === 'TENANT_ADMIN' || user?.role === 'OPERATIONS';
   const [opened, { open, close }] = useDisclosure(false);
 
   const { data: policies = [], isLoading } = useQuery({
@@ -97,19 +100,25 @@ function PoliciesTab() {
               <Table.Td><Badge size="sm">{p.strategyKind}</Badge></Table.Td>
               <Table.Td>{p.projectId ? p.projectId.slice(0, 8) + '…' : '(all)'}</Table.Td>
               <Table.Td>
-                <Switch
-                  checked={p.enabled}
-                  onChange={() => toggle({ id: p.id, enabled: p.enabled })}
-                />
+                {canManage ? (
+                  <Switch
+                    checked={p.enabled}
+                    onChange={() => toggle({ id: p.id, enabled: p.enabled })}
+                  />
+                ) : (
+                  <Badge color={p.enabled ? 'green' : 'gray'} size="sm">{p.enabled ? 'On' : 'Off'}</Badge>
+                )}
               </Table.Td>
-              <Table.Td>
-                <Button
-                  size="xs" variant="subtle" color="red"
-                  onClick={() => toggle({ id: p.id, enabled: true })}
-                >
-                  Disable
-                </Button>
-              </Table.Td>
+              {canManage && (
+                <Table.Td>
+                  <Button
+                    size="xs" variant="subtle" color="red"
+                    onClick={() => toggle({ id: p.id, enabled: true })}
+                  >
+                    Disable
+                  </Button>
+                </Table.Td>
+              )}
             </Table.Tr>
           ))}
         </Table.Tbody>

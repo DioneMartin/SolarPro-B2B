@@ -89,7 +89,7 @@ export function UsersPage() {
           {users.map((u: any) => (
             <Table.Tr key={u.id}>
               <Table.Td>
-                {u.displayName}
+                {u.fullName}
                 {u.id === me?.id && (
                   <Badge size="xs" ml={6} color="gray">you</Badge>
                 )}

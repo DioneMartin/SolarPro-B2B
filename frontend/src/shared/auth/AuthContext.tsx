@@ -7,9 +7,10 @@ export type Role = 'TENANT_ADMIN' | 'SOLAR_CONSULTANT' | 'INVENTORY_MANAGER' | '
 export interface AuthUser {
   id: string;
   email: string;
-  displayName: string;
+  fullName: string;
   role: Role;
   tenantId: string;
+  tenantName?: string;
 }
 
 interface AuthContextValue {
