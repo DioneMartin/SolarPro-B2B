@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Stack, Title, Text, Badge, Tabs, Button, Group, Loader, Center,
-  FileInput, NumberInput, TextInput, Modal, Paper, ActionIcon,
+  FileInput, NumberInput, Modal, Paper, ActionIcon,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { projectsApi } from '../features/projects/api';
 import { ingestionApi } from '../features/ingestion/api';
+import { LocationPicker } from '../features/ingestion/components/LocationPicker';
 import { ProposalBuilderForm } from '../features/proposals/components/ProposalBuilderForm';
 import { ProposalsTable } from '../features/proposals/components/ProposalsTable';
 
@@ -205,16 +206,19 @@ export function ProjectDetailPage() {
 
         <Tabs.Panel value="surface" pt="md">
           <Stack>
-            <Text size="sm" c="dimmed">Look up roof surface data via Google Solar API.</Text>
+            <Text size="sm" c="dimmed">
+              Set the site location on the map, then look up roof surface data via Google Solar API.
+            </Text>
             <form onSubmit={surfaceForm.onSubmit((v) => lookupSurface(v))}>
               <Stack>
-                <TextInput label="Address (or use coordinates below)"
-                  {...surfaceForm.getInputProps('address')} />
-                <Group grow>
-                  <NumberInput label="Latitude" decimalScale={6} {...surfaceForm.getInputProps('lat')} />
-                  <NumberInput label="Longitude" decimalScale={6} {...surfaceForm.getInputProps('lon')} />
-                </Group>
-                <Button type="submit" loading={lookingUp}>Lookup Surface</Button>
+                <LocationPicker
+                  value={{ lat: surfaceForm.values.lat, lon: surfaceForm.values.lon, address: surfaceForm.values.address }}
+                  onChange={(loc) => surfaceForm.setValues({ lat: loc.lat, lon: loc.lon, address: loc.address })}
+                />
+                <Button type="submit" loading={lookingUp}
+                  disabled={!surfaceForm.values.lat || !surfaceForm.values.lon}>
+                  Lookup Surface
+                </Button>
               </Stack>
             </form>
 
