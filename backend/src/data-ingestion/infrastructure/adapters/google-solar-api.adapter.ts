@@ -51,21 +51,39 @@ export class GoogleSolarApiAdapter implements SolarApiPort {
       return this.parseResponse(cached.response);
     }
 
+    // 1. Fetch from the Solar API. Network/HTTP failures are handled here.
+    let data: any;
     try {
-      const url = `https://solar.googleapis.com/v1/buildingInsights:findClosest?${locationParam}&requiredQuality=HIGH&key=${apiKey}`;
-      const { data } = await firstValueFrom(this.httpService.get(url));
+      const url = `https://solar.googleapis.com/v1/buildingInsights:findClosest?${locationParam}&requiredQuality=LOW&key=${apiKey}`;
+      const resp = await firstValueFrom(this.httpService.get(url));
+      data = resp.data;
+    } catch (e: any) {
+      const status = e.response?.status;
+      const body = e.response?.data;
+      this.logger.error(
+        `Solar API HTTP error (status=${status ?? 'n/a'}): ${body ? JSON.stringify(body) : e.message}`,
+      );
+      // 404 = no building / solar coverage at this point → degrade gracefully
+      if (status === 404) {
+        this.logger.warn('No solar data for this location; returning estimated dummy data.');
+        return this.getDummyData(input.coords);
+      }
+      throw new Error(`Failed to fetch from Google Solar API (status ${status ?? 'unknown'})`);
+    }
 
+    // 2. Cache the response. A cache failure must NOT fail the lookup.
+    try {
       const cacheEntry = new SolarApiCacheOrmEntity();
       cacheEntry.addressHash = hash;
       cacheEntry.response = data;
       cacheEntry.fetchedAt = new Date();
       await this.cacheRepo.save(cacheEntry);
-
-      return this.parseResponse(data);
     } catch (e: any) {
-      this.logger.error(`Error calling Solar API: ${e.message}`);
-      throw new Error('Failed to fetch from Google Solar API');
+      this.logger.warn(`Failed to cache Solar API response: ${e.message}`);
     }
+
+    // 3. Parse. If this throws, the real error surfaces (not masked as a fetch failure).
+    return this.parseResponse(data);
   }
 
   private parseResponse(data: any) {
