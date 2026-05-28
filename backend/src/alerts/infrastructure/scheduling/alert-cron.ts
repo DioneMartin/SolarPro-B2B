@@ -8,7 +8,7 @@ export class AlertCron {
 
   constructor(private readonly evaluator: AlertEvaluator) {}
 
-  @Cron('0 */15 * * * *') // every 15 minutes
+  @Cron('0 * * * * *') // every minute
   async tick(): Promise<void> {
     this.logger.debug('Alert evaluator tick');
     await this.evaluator.tick();

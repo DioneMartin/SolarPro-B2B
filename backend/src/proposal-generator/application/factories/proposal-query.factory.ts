@@ -43,6 +43,7 @@ export interface GenerateProposalInput {
   discountRatePct?: number;
   brandWhitelist?: string[];
   criteria?: CriterionDto[];
+  pricePerKwh?: number;
 }
 
 @Injectable()

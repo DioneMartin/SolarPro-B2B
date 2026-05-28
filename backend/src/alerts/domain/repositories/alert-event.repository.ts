@@ -6,6 +6,8 @@ export interface AlertEventFilter {
   acknowledged?: boolean;
   since?: Date;
   projectId?: string;
+  /** 'policy' = time/weather-based (policyId NOT NULL); 'activity' = domain-event-based (policyId IS NULL) */
+  source?: 'policy' | 'activity';
 }
 
 export interface AlertEventRepository {

@@ -10,11 +10,11 @@ export class AlertEventOrmEntity {
   @Column({ name: 'tenant_id', type: 'uuid' })
   tenantId!: string;
 
-  @Column({ name: 'policy_id', type: 'uuid' })
-  policyId!: string;
+  @Column({ name: 'policy_id', type: 'uuid', nullable: true })
+  policyId!: string | null;
 
-  @Column({ name: 'project_id', type: 'uuid' })
-  projectId!: string;
+  @Column({ name: 'project_id', type: 'uuid', nullable: true })
+  projectId!: string | null;
 
   @Column({ type: 'text' })
   severity!: string;
@@ -37,6 +37,6 @@ export class AlertEventOrmEntity {
   @Column({ name: 'acknowledged_by', type: 'uuid', nullable: true })
   acknowledgedBy!: string | null;
 
-  @ManyToOne(() => AlertPolicyOrmEntity, { onDelete: 'CASCADE' })
-  policy!: AlertPolicyOrmEntity;
+  @ManyToOne(() => AlertPolicyOrmEntity, { onDelete: 'CASCADE', nullable: true })
+  policy!: AlertPolicyOrmEntity | null;
 }

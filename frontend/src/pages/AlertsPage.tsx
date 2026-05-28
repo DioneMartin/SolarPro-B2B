@@ -8,15 +8,41 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from '@mantine/form';
 import { alertsApi } from '../features/alerts/api';
 import { useAuth } from '../shared/auth/AuthContext';
+import type { Role } from '../shared/auth/AuthContext';
 
 const SEVERITY_COLORS: Record<string, string> = {
-  LOW: 'gray', MEDIUM: 'yellow', HIGH: 'orange', CRITICAL: 'red',
+  LOW: 'gray', MEDIUM: 'yellow', HIGH: 'orange', CRITICAL: 'red', INFO: 'blue', WARNING: 'orange',
 };
+
+const SEVERITY_LABELS: Record<string, string> = {
+  LOW: 'Baja', MEDIUM: 'Media', HIGH: 'Alta', CRITICAL: 'Crítica', INFO: 'Info', WARNING: 'Advertencia',
+};
+
+const STRATEGY_LABELS: Record<string, string> = {
+  TIME_BASED: 'Por tiempo', WEATHER_BASED: 'Por clima',
+};
+
+/** Which event source to show based on the user's role */
+function eventSourceForRole(role: Role): 'policy' | 'activity' | undefined {
+  if (role === 'TENANT_ADMIN') return undefined;       // all events
+  if (role === 'OPERATIONS') return 'policy';          // time/weather policy alerts only
+  return 'activity';                                   // SOLAR_CONSULTANT + INVENTORY_MANAGER
+}
+
+/** Which roles can manage (create/enable/disable) alert policies */
+function canManagePolicies(role: Role): boolean {
+  return role === 'TENANT_ADMIN' || role === 'OPERATIONS';
+}
+
+/** Which roles see the Políticas tab */
+function canSeePoliciesTab(role: Role): boolean {
+  return role === 'TENANT_ADMIN' || role === 'OPERATIONS';
+}
 
 function PoliciesTab() {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const canManage = user?.role === 'TENANT_ADMIN' || user?.role === 'OPERATIONS';
+  const canManage = !!user && canManagePolicies(user.role);
   const [opened, { open, close }] = useDisclosure(false);
 
   const { data: policies = [], isLoading } = useQuery({
@@ -28,9 +54,7 @@ function PoliciesTab() {
     initialValues: {
       projectId: '',
       strategyKind: 'TIME_BASED' as string,
-      // WEATHER_BASED fields
-      lat: 0,
-      lon: 0,
+      // WEATHER_BASED fields (lat/lon come from project site address)
       windGustKmhAbove: 80,
       rainMmInDayAbove: 50,
       aqiAbove: 150,
@@ -43,7 +67,6 @@ function PoliciesTab() {
     mutationFn: (v: typeof form.values) => {
       let config: any;
       if (v.strategyKind === 'TIME_BASED') {
-        // Default schedule: quarterly panel cleaning + annual inverter check
         config = {
           schedule: [
             { kind: 'PANEL_CLEANING', cron: '0 9 1 */3 *', leadDays: 7 },
@@ -51,8 +74,8 @@ function PoliciesTab() {
           ],
         };
       } else {
+        // coords are omitted — the backend derives them from the project's site address
         config = {
-          coords: { lat: v.lat, lon: v.lon },
           thresholds: {
             windGustKmhAbove: v.windGustKmhAbove,
             rainMmInDayAbove: v.rainMmInDayAbove,
@@ -71,9 +94,9 @@ function PoliciesTab() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['alerts', 'policies'] }); close(); form.reset(); },
   });
 
-  const { mutate: toggle } = useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      enabled ? alertsApi.policies.disable(id) : alertsApi.policies.enable(id),
+  const { mutate: toggleMute } = useMutation({
+    mutationFn: ({ id, muted }: { id: string; muted: boolean }) =>
+      muted ? alertsApi.policies.unmute(id) : alertsApi.policies.mute(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['alerts', 'policies'] }),
   });
 
@@ -81,41 +104,40 @@ function PoliciesTab() {
 
   return (
     <Stack>
-      <Group justify="flex-end">
-        <Button onClick={open}>+ New Policy</Button>
-      </Group>
+      {canManage && (
+        <Group justify="flex-end">
+          <Button onClick={open}>+ Nueva política</Button>
+        </Group>
+      )}
 
       <Table striped highlightOnHover withTableBorder>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>Strategy</Table.Th>
-            <Table.Th>Project</Table.Th>
-            <Table.Th>Enabled</Table.Th>
-            <Table.Th>Actions</Table.Th>
+            <Table.Th>Estrategia</Table.Th>
+            <Table.Th>Proyecto</Table.Th>
+            <Table.Th>Notificaciones</Table.Th>
+            {canManage && <Table.Th>Acciones</Table.Th>}
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
           {policies.map((p: any) => (
             <Table.Tr key={p.id}>
-              <Table.Td><Badge size="sm">{p.strategyKind}</Badge></Table.Td>
-              <Table.Td>{p.projectId ? p.projectId.slice(0, 8) + '…' : '(all)'}</Table.Td>
+              <Table.Td><Badge size="sm">{STRATEGY_LABELS[p.strategyKind] ?? p.strategyKind}</Badge></Table.Td>
+              <Table.Td>{p.projectId ? p.projectId.slice(0, 8) + '…' : '(todos)'}</Table.Td>
               <Table.Td>
-                {canManage ? (
-                  <Switch
-                    checked={p.enabled}
-                    onChange={() => toggle({ id: p.id, enabled: p.enabled })}
-                  />
-                ) : (
-                  <Badge color={p.enabled ? 'green' : 'gray'} size="sm">{p.enabled ? 'On' : 'Off'}</Badge>
-                )}
+                <Switch
+                  checked={!p.muted}
+                  onChange={() => toggleMute({ id: p.id, muted: p.muted })}
+                  label={p.muted ? 'Silenciada' : 'Activa'}
+                />
               </Table.Td>
               {canManage && (
                 <Table.Td>
                   <Button
-                    size="xs" variant="subtle" color="red"
-                    onClick={() => toggle({ id: p.id, enabled: true })}
+                    size="xs" variant="subtle" color={p.muted ? 'green' : 'orange'}
+                    onClick={() => toggleMute({ id: p.id, muted: p.muted })}
                   >
-                    Disable
+                    {p.muted ? 'Activar' : 'Silenciar'}
                   </Button>
                 </Table.Td>
               )}
@@ -124,61 +146,56 @@ function PoliciesTab() {
         </Table.Tbody>
       </Table>
 
-      <Modal opened={opened} onClose={close} title="New Alert Policy" size="md">
+      <Modal opened={opened} onClose={close} title="Nueva política de alertas" size="md">
         <form onSubmit={form.onSubmit((v) => create(v))}>
           <Stack>
             <TextInput
-              label="Project ID"
-              description="The project must be in APPROVED status"
+              label="ID del proyecto"
+              description="El proyecto debe estar en estado APROBADO"
               required
               {...form.getInputProps('projectId')}
             />
             <Select
-              label="Strategy"
+              label="Estrategia"
               data={[
-                { value: 'TIME_BASED', label: 'Time-based (maintenance reminders)' },
-                { value: 'WEATHER_BASED', label: 'Weather-based (environmental conditions)' },
+                { value: 'TIME_BASED', label: 'Por tiempo (recordatorios de mantenimiento)' },
+                { value: 'WEATHER_BASED', label: 'Por clima (condiciones ambientales)' },
               ]}
               {...form.getInputProps('strategyKind')}
             />
 
             {form.values.strategyKind === 'TIME_BASED' && (
               <Text size="xs" c="dimmed">
-                Default schedule: quarterly panel cleaning + annual inverter check.
-                Edit the policy config after creation for custom cron schedules.
+                Programación predeterminada: limpieza trimestral de paneles + revisión anual del inversor.
+                Edita la configuración de la política tras crearla para programaciones cron personalizadas.
               </Text>
             )}
 
             {form.values.strategyKind === 'WEATHER_BASED' && (
               <Stack>
                 <Text size="xs" c="dimmed">
-                  Monitors weather conditions at the project site.
-                  Fires an alert when thresholds are exceeded.
+                  Monitorea las condiciones climáticas en el sitio del proyecto.
+                  Las coordenadas se obtienen automáticamente de la dirección del proyecto.
+                  Dispara una alerta cuando se superan los umbrales.
                 </Text>
                 <Group grow>
-                  <NumberInput label="Site latitude" decimalScale={6} required
-                    {...form.getInputProps('lat')} />
-                  <NumberInput label="Site longitude" decimalScale={6} required
-                    {...form.getInputProps('lon')} />
-                </Group>
-                <Group grow>
-                  <NumberInput label="Wind gust above (km/h)" min={0}
+                  <NumberInput label="Ráfaga de viento sobre (km/h)" min={0}
                     {...form.getInputProps('windGustKmhAbove')} />
-                  <NumberInput label="Rain above (mm/day)" min={0}
+                  <NumberInput label="Lluvia sobre (mm/día)" min={0}
                     {...form.getInputProps('rainMmInDayAbove')} />
                 </Group>
                 <Group grow>
-                  <NumberInput label="AQI above (US)" min={0}
+                  <NumberInput label="ICA sobre (EE. UU.)" min={0}
                     {...form.getInputProps('aqiAbove')} />
-                  <NumberInput label="Pollen index above" min={0} max={5}
+                  <NumberInput label="Índice de polen sobre" min={0} max={5}
                     {...form.getInputProps('pollenAbove')} />
                 </Group>
-                <NumberInput label="Poll interval (minutes)" min={15} max={1440}
+                <NumberInput label="Intervalo de sondeo (minutos)" min={15} max={1440}
                   {...form.getInputProps('pollIntervalMinutes')} />
               </Stack>
             )}
 
-            <Button type="submit" loading={isPending}>Create Policy</Button>
+            <Button type="submit" loading={isPending}>Crear política</Button>
           </Stack>
         </form>
       </Modal>
@@ -186,13 +203,17 @@ function PoliciesTab() {
   );
 }
 
-function EventsTab() {
+function EventsTab({ role }: { role: Role }) {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'unack'>('unack');
+  const source = eventSourceForRole(role);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ['alerts', 'events', filter],
-    queryFn: () => alertsApi.events.list(filter === 'unack' ? { acknowledged: false } : {}),
+    queryKey: ['alerts', 'events', filter, source],
+    queryFn: () => alertsApi.events.list({
+      acknowledged: filter === 'unack' ? false : undefined,
+      source,
+    }),
   });
 
   const { mutate: ack } = useMutation({
@@ -209,42 +230,42 @@ function EventsTab() {
     <Stack>
       <Group>
         <Button variant={filter === 'unack' ? 'filled' : 'outline'} size="xs"
-          onClick={() => setFilter('unack')}>Unacknowledged</Button>
+          onClick={() => setFilter('unack')}>Sin reconocer</Button>
         <Button variant={filter === 'all' ? 'filled' : 'outline'} size="xs"
-          onClick={() => setFilter('all')}>All Events</Button>
+          onClick={() => setFilter('all')}>Todos los eventos</Button>
       </Group>
 
       {events.length === 0 ? (
-        <Text c="dimmed">No alert events found.</Text>
+        <Text c="dimmed">No se encontraron eventos de alerta.</Text>
       ) : (
         <Table striped highlightOnHover withTableBorder>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Time</Table.Th>
-              <Table.Th>Project</Table.Th>
-              <Table.Th>Severity</Table.Th>
-              <Table.Th>Title</Table.Th>
-              <Table.Th>Status</Table.Th>
-              <Table.Th>Actions</Table.Th>
+              <Table.Th>Hora</Table.Th>
+              <Table.Th>Proyecto</Table.Th>
+              <Table.Th>Severidad</Table.Th>
+              <Table.Th>Título</Table.Th>
+              <Table.Th>Estado</Table.Th>
+              <Table.Th>Acciones</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
             {events.map((e: any) => (
               <Table.Tr key={e.id}>
-                <Table.Td>{new Date(e.firedAt).toLocaleString()}</Table.Td>
+                <Table.Td>{new Date(e.firedAt ?? e.triggeredAt).toLocaleString()}</Table.Td>
                 <Table.Td>{e.projectId ? e.projectId.slice(0, 8) + '…' : '—'}</Table.Td>
                 <Table.Td>
-                  <Badge color={SEVERITY_COLORS[e.severity] ?? 'gray'} size="sm">{e.severity}</Badge>
+                  <Badge color={SEVERITY_COLORS[e.severity] ?? 'gray'} size="sm">{SEVERITY_LABELS[e.severity] ?? e.severity}</Badge>
                 </Table.Td>
                 <Table.Td>{e.title}</Table.Td>
                 <Table.Td>
                   <Badge color={e.acknowledgedAt ? 'green' : 'orange'} size="sm">
-                    {e.acknowledgedAt ? 'Acknowledged' : 'Open'}
+                    {e.acknowledgedAt ? 'Reconocida' : 'Abierta'}
                   </Badge>
                 </Table.Td>
                 <Table.Td>
                   {!e.acknowledgedAt && (
-                    <Button size="xs" variant="light" onClick={() => ack(e.id)}>Acknowledge</Button>
+                    <Button size="xs" variant="light" onClick={() => ack(e.id)}>Reconocer</Button>
                   )}
                 </Table.Td>
               </Table.Tr>
@@ -257,16 +278,21 @@ function EventsTab() {
 }
 
 export function AlertsPage() {
+  const { user } = useAuth();
+  if (!user) return null;
+
+  const showPoliciesTab = canSeePoliciesTab(user.role);
+
   return (
     <Stack>
-      <Title order={2}>Alerts</Title>
+      <Title order={2}>Alertas</Title>
       <Tabs defaultValue="events">
         <Tabs.List>
-          <Tabs.Tab value="events">Events</Tabs.Tab>
-          <Tabs.Tab value="policies">Policies</Tabs.Tab>
+          <Tabs.Tab value="events">Eventos</Tabs.Tab>
+          {showPoliciesTab && <Tabs.Tab value="policies">Políticas</Tabs.Tab>}
         </Tabs.List>
-        <Tabs.Panel value="events" pt="md"><EventsTab /></Tabs.Panel>
-        <Tabs.Panel value="policies" pt="md"><PoliciesTab /></Tabs.Panel>
+        <Tabs.Panel value="events" pt="md"><EventsTab role={user.role} /></Tabs.Panel>
+        {showPoliciesTab && <Tabs.Panel value="policies" pt="md"><PoliciesTab /></Tabs.Panel>}
       </Tabs>
     </Stack>
   );

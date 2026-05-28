@@ -22,6 +22,8 @@ import { WeatherBasedAlertStrategy } from '../domain/strategies/weather-based-al
 // Application
 import { AlertEvaluator, ALERT_STRATEGIES } from '../application/services/alert-evaluator';
 import { OnProjectApprovedHandler } from '../application/event-handlers/on-project-approved.handler';
+import { OnProposalGeneratedHandler } from '../application/event-handlers/on-proposal-generated.handler';
+import { OnActivityEventHandler } from '../application/event-handlers/on-activity-event.handler';
 import { CreateAlertPolicyUseCase, PROJECT_STATUS_READER_PORT } from '../application/use-cases/create-alert-policy.use-case';
 import { UpdateAlertPolicyUseCase } from '../application/use-cases/update-alert-policy.use-case';
 import { EnableDisableAlertPolicyUseCase } from '../application/use-cases/enable-disable-alert-policy.use-case';
@@ -99,8 +101,10 @@ import { ProjectOrmEntity } from '../../project-client/infrastructure/persistenc
     AlertEvaluator,
     AlertCron,
 
-    // Event handler
+    // Event handlers
     OnProjectApprovedHandler,
+    OnProposalGeneratedHandler,
+    OnActivityEventHandler,
 
     // WebSocket gateway + notification
     AlertsGateway,

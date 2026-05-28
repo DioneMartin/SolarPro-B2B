@@ -22,9 +22,9 @@ export class OnProjectApprovedHandler {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.eventBus.subscribe('project.approved', async (payload: any) => {
+    this.eventBus.subscribe('project.approved', async (envelope) => {
       try {
-        await this.handle(payload);
+        await this.handle((envelope?.payload ?? {}) as { projectId: string; tenantId: string });
       } catch (err: any) {
         this.logger.error(`Error handling project.approved: ${err.message}`);
       }

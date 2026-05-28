@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual } from 'typeorm';
+import { Repository, MoreThanOrEqual, IsNull, Not } from 'typeorm';
 import { AlertEventOrmEntity } from './alert-event.orm-entity';
 import { AlertEvent } from '../../domain/entities/alert-event.entity';
 import type { AlertEventRepository, AlertEventFilter } from '../../domain/repositories/alert-event.repository';
@@ -61,6 +61,8 @@ export class TypeOrmAlertEventRepository implements AlertEventRepository {
     if (filter.since) where.triggeredAt = MoreThanOrEqual(filter.since);
     if (filter.acknowledged === false) where.acknowledgedAt = null;
     if (filter.acknowledged === true) where.acknowledgedAt = MoreThanOrEqual(new Date(0));
+    if (filter.source === 'policy') where.policyId = Not(IsNull());
+    if (filter.source === 'activity') where.policyId = IsNull();
 
     const orms = await this.ormRepo.find({ where, order: { triggeredAt: 'DESC' } });
     return orms.map(o => this.toDomain(o));

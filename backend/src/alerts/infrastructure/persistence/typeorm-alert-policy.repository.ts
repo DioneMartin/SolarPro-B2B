@@ -21,6 +21,7 @@ export class TypeOrmAlertPolicyRepository implements AlertPolicyRepository {
       strategyKind: orm.strategyKind as StrategyKind,
       config: orm.config as PolicyConfig,
       enabled: orm.enabled,
+      mutedByUsers: (orm.mutedByUsers as string[]) ?? [],
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
     });
@@ -34,6 +35,7 @@ export class TypeOrmAlertPolicyRepository implements AlertPolicyRepository {
     orm.strategyKind = domain.strategyKind;
     orm.config = domain.config as object;
     orm.enabled = domain.enabled;
+    orm.mutedByUsers = domain.mutedByUsers;
     orm.createdAt = domain.createdAt;
     orm.updatedAt = domain.updatedAt;
     return orm;
@@ -50,6 +52,11 @@ export class TypeOrmAlertPolicyRepository implements AlertPolicyRepository {
 
   async findByProjectId(projectId: string, tenantId: string): Promise<AlertPolicy[]> {
     const orms = await this.ormRepo.find({ where: { projectId, tenantId } });
+    return orms.map(o => this.toDomain(o));
+  }
+
+  async listAll(tenantId: string): Promise<AlertPolicy[]> {
+    const orms = await this.ormRepo.find({ where: { tenantId } });
     return orms.map(o => this.toDomain(o));
   }
 

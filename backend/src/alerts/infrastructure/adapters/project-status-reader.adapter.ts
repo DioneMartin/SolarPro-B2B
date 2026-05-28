@@ -15,4 +15,15 @@ export class ProjectStatusReaderAdapter implements ProjectStatusReaderPort {
     const project = await this.ormRepo.findOne({ where: { id: projectId, tenantId } });
     return project?.status ?? null;
   }
+
+  async getCoords(
+    projectId: string,
+    tenantId: string,
+  ): Promise<{ lat: number; lon: number } | null> {
+    const project = await this.ormRepo.findOne({ where: { id: projectId, tenantId } });
+    if (!project || project.siteAddressLat == null || project.siteAddressLon == null) {
+      return null;
+    }
+    return { lat: project.siteAddressLat, lon: project.siteAddressLon };
+  }
 }

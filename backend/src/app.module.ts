@@ -18,6 +18,7 @@ import { DataIngestionModule } from './data-ingestion/infrastructure/data-ingest
 import { SolarCalculationModule } from './solar-calculation/infrastructure/solar-calculation.module';
 import { ProposalGeneratorModule } from './proposal-generator/infrastructure/proposal-generator.module';
 import { AlertsModule } from './alerts/infrastructure/alerts.module';
+import { NotificationModule } from './shared/notifications/notification.module';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -44,6 +45,7 @@ import { BullModule } from '@nestjs/bullmq';
     SolarCalculationModule,
     ProposalGeneratorModule,
     AlertsModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [

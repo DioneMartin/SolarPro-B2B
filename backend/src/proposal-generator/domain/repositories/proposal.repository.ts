@@ -6,6 +6,7 @@ export interface ProposalRepository {
   findByProjectId(projectId: string, tenantId: string): Promise<Proposal[]>;
   findByTenantId(tenantId: string): Promise<Proposal[]>;
   delete(id: string, tenantId: string): Promise<void>;
+  countByProjectId(projectId: string, tenantId: string): Promise<{ total: number; rejected: number }>;
 }
 
 export const PROPOSAL_REPOSITORY = 'PROPOSAL_REPOSITORY';

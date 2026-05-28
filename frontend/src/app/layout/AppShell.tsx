@@ -7,13 +7,14 @@ import { useQuery } from '@tanstack/react-query';
 import { alertsApi } from '../../features/alerts/api';
 
 const navItems = [
-  { label: 'Dashboard', path: '/', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT', 'OPERATIONS', 'INVENTORY_MANAGER'] },
-  { label: 'Clients', path: '/clients', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
-  { label: 'Catalog', path: '/catalog', roles: ['TENANT_ADMIN', 'INVENTORY_MANAGER'] },
-  { label: 'Proposals', path: '/proposals', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
-  { label: 'Alerts', path: '/alerts', roles: ['TENANT_ADMIN', 'OPERATIONS'] },
-  { label: 'Team', path: '/users', roles: ['TENANT_ADMIN'] },
-  { label: 'Settings', path: '/settings', roles: ['TENANT_ADMIN'] },
+  { label: 'Tablero', path: '/', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT', 'OPERATIONS', 'INVENTORY_MANAGER'] },
+  { label: 'Clientes', path: '/clients', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
+  { label: 'Proyectos', path: '/projects', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
+  { label: 'Catálogo', path: '/catalog', roles: ['TENANT_ADMIN', 'INVENTORY_MANAGER'] },
+  { label: 'Propuestas', path: '/proposals', roles: ['TENANT_ADMIN', 'SOLAR_CONSULTANT'] },
+  { label: 'Alertas', path: '/alerts', roles: ['TENANT_ADMIN', 'OPERATIONS', 'SOLAR_CONSULTANT', 'INVENTORY_MANAGER'] },
+  { label: 'Equipo', path: '/users', roles: ['TENANT_ADMIN'] },
+  { label: 'Configuración', path: '/settings', roles: ['TENANT_ADMIN'] },
 ] as const;
 
 export function AppShellLayout() {
@@ -22,12 +23,11 @@ export function AppShellLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const canSeeAlertEvents = !!user && (user.role === 'TENANT_ADMIN' || user.role === 'OPERATIONS');
   const { data: unackEvents } = useQuery({
     queryKey: ['alerts', 'events', 'unack'],
     queryFn: () => alertsApi.events.list({ acknowledged: false }),
     refetchInterval: 60_000,
-    enabled: canSeeAlertEvents,
+    enabled: !!user,
   });
   const unackCount = unackEvents?.length ?? 0;
 
@@ -47,11 +47,11 @@ export function AppShellLayout() {
           <Group>
             {unackCount > 0 && (
               <Badge color="red" radius="xl" onClick={() => navigate('/alerts')} style={{ cursor: 'pointer' }}>
-                {unackCount} alert{unackCount !== 1 ? 's' : ''}
+                {unackCount} alerta{unackCount !== 1 ? 's' : ''}
               </Badge>
             )}
             <Text size="sm" c="dimmed">{user?.email}</Text>
-            <ActionIcon variant="subtle" onClick={logout} title="Logout">
+            <ActionIcon variant="subtle" onClick={logout} title="Cerrar sesión">
               <span>↩</span>
             </ActionIcon>
           </Group>

@@ -10,6 +10,7 @@ import { ListClientsUseCase } from '../application/use-cases/list-clients.use-ca
 import { ListProjectsUseCase } from '../application/use-cases/list-projects.use-case';
 import { ApproveProjectUseCase, MarkReadyForProposalUseCase, SelectProposalUseCase } from '../application/use-cases/project-transitions.use-case';
 import { UpdateClientUseCase } from '../application/use-cases/update-client.use-case';
+import { OnIngestionCompletedHandler } from '../application/event-handlers/on-ingestion-completed.handler';
 import { CLIENT_REPOSITORY } from '../domain/repositories/client.repository';
 import { PROJECT_REPOSITORY } from '../domain/repositories/project.repository';
 import { DashboardController } from './http/dashboard.controller';
@@ -39,9 +40,12 @@ import { TypeOrmProjectRepository } from './persistence/typeorm-project.reposito
     SelectProposalUseCase,
     ApproveProjectUseCase,
     GetDashboardUseCase,
+    // Event handlers
+    OnIngestionCompletedHandler,
     // Repository bindings
     { provide: CLIENT_REPOSITORY, useClass: TypeOrmClientRepository },
     { provide: PROJECT_REPOSITORY, useClass: TypeOrmProjectRepository },
   ],
+  exports: [PROJECT_REPOSITORY],
 })
 export class ProjectClientModule {}

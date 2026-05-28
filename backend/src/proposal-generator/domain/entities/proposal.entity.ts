@@ -4,6 +4,7 @@ import type { ProposalQuery } from '../value-objects/proposal-query.vo';
 export enum ProposalStatus {
   DRAFT = 'DRAFT',
   EXPORTED = 'EXPORTED',
+  REJECTED = 'REJECTED',
 }
 
 interface CreateProposalProps {
@@ -81,5 +82,13 @@ export class Proposal {
 
   isDraft(): boolean {
     return this._status === ProposalStatus.DRAFT;
+  }
+
+  reject(): void {
+    this._status = ProposalStatus.REJECTED;
+  }
+
+  isRejected(): boolean {
+    return this._status === ProposalStatus.REJECTED;
   }
 }

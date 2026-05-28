@@ -4,6 +4,7 @@ export interface AlertPolicyRepository {
   save(policy: AlertPolicy): Promise<void>;
   findById(id: string, tenantId: string): Promise<AlertPolicy | null>;
   findByProjectId(projectId: string, tenantId: string): Promise<AlertPolicy[]>;
+  listAll(tenantId: string): Promise<AlertPolicy[]>;
   listEnabled(): Promise<AlertPolicy[]>;
   delete(id: string, tenantId: string): Promise<void>;
 }

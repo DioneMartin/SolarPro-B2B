@@ -1,6 +1,7 @@
-export class NoViableCombinationError extends Error {
+import { DomainRuleError } from '../../../shared/errors';
+
+export class NoViableCombinationError extends DomainRuleError {
   constructor(reason: string) {
-    super(`No viable panel+inverter combination found: ${reason}`);
-    this.name = 'NoViableCombinationError';
+    super(`No se encontró ninguna combinación viable de panel+inversor: ${reason}`);
   }
 }

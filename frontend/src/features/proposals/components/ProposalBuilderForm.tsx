@@ -1,6 +1,7 @@
-import { Stack, NumberInput, Select, Checkbox, Group, Button, Text, Radio } from '@mantine/core';
+import { Stack, NumberInput, Checkbox, Group, Button, Text, Radio, TextInput, Alert } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
 import { proposalsApi } from '../api';
 
 interface Props {
@@ -8,11 +9,12 @@ interface Props {
   onSuccess: () => void;
 }
 
+// Values must match the backend CriterionDto['type'] union (camelCase).
 const OPTIMIZE_OPTIONS = [
-  { value: 'lowest-roi', label: 'Best ROI' },
-  { value: 'lowest-cost', label: 'Lowest Cost' },
-  { value: 'shortest-payback', label: 'Shortest Payback' },
-  { value: 'highest-roi', label: 'Highest ROI' },
+  { value: 'shortestPayback', label: 'Menor tiempo de retorno' },
+  { value: 'highestROI', label: 'Mayor ROI' },
+  { value: 'lowestCost', label: 'Menor costo' },
+  { value: 'lowestROI', label: 'Menor ROI' },
 ];
 
 export function ProposalBuilderForm({ projectId, onSuccess }: Props) {
@@ -20,42 +22,42 @@ export function ProposalBuilderForm({ projectId, onSuccess }: Props) {
 
   const form = useForm({
     initialValues: {
-      coverageTarget: 0.9,
+      energyDemandTargetPct: 90,
       horizonYears: 25,
-      discountRate: 0.08,
-      optimizeFor: 'lowest-roi',
+      discountRatePct: 8,
+      pricePerKwh: 2.5,
+      optimizeFor: 'shortestPayback',
       fitsSurface: true,
       meetsTarget: true,
       brands: '',
-      minPrice: '',
-      maxPrice: '',
+      minPrice: '' as number | '',
+      maxPrice: '' as number | '',
     },
   });
 
-  const { mutate: generate, isPending } = useMutation({
+  const { mutate: generate, isPending, error } = useMutation<any, any, typeof form.values>({
     mutationFn: (vals: typeof form.values) => {
       const criteria: any[] = [];
 
-      if (vals.fitsSurface) criteria.push({ type: 'fits-surface' });
-      if (vals.meetsTarget) criteria.push({ type: 'meets-target', coverageTarget: vals.coverageTarget });
-      if (vals.brands.trim()) {
-        vals.brands.split(',').map(b => b.trim()).filter(Boolean).forEach(brand => {
-          criteria.push({ type: 'brand', brand });
-        });
-      }
-      if (vals.minPrice || vals.maxPrice) {
-        criteria.push({
-          type: 'price-range',
-          min: vals.minPrice ? Number(vals.minPrice) : undefined,
-          max: vals.maxPrice ? Number(vals.maxPrice) : undefined,
-        });
+      if (vals.fitsSurface) criteria.push({ type: 'fitsSurface' });
+      if (vals.meetsTarget) criteria.push({ type: 'meetsTarget' });
+      // priceRange requires BOTH bounds on the backend.
+      if (vals.minPrice !== '' && vals.maxPrice !== '') {
+        criteria.push({ type: 'priceRange', min: Number(vals.minPrice), max: Number(vals.maxPrice) });
       }
       if (vals.optimizeFor) criteria.push({ type: vals.optimizeFor });
 
+      // Multiple brands are an OR-whitelist, not stacked AND criteria.
+      const brandWhitelist = vals.brands.trim()
+        ? vals.brands.split(',').map((b) => b.trim()).filter(Boolean)
+        : undefined;
+
       return proposalsApi.generate(projectId, {
-        coverageTarget: vals.coverageTarget,
+        energyDemandTargetPct: vals.energyDemandTargetPct,
         horizonYears: vals.horizonYears,
-        discountRate: vals.discountRate,
+        discountRatePct: vals.discountRatePct,
+        pricePerKwh: vals.pricePerKwh || undefined,
+        brandWhitelist,
         criteria,
       });
     },
@@ -63,77 +65,107 @@ export function ProposalBuilderForm({ projectId, onSuccess }: Props) {
       qc.invalidateQueries({ queryKey: ['proposals', projectId] });
       onSuccess();
     },
+    onError: (err: any) => {
+      const raw = err?.response?.data?.message;
+      const msg = Array.isArray(raw) ? raw.join('; ') : (raw ?? 'Ocurrió un error inesperado al generar la propuesta.');
+      notifications.show({
+        title: 'No se pudo generar la propuesta',
+        message: msg,
+        color: 'red',
+        autoClose: 10_000,
+      });
+    },
   });
+
+  const errMsg = error?.response?.data?.message;
 
   return (
     <form onSubmit={form.onSubmit((v) => generate(v))}>
       <Stack>
         <Text size="sm" c="dimmed">
-          Configure the parameters for proposal generation. The engine will evaluate all viable
-          panel/inverter combinations from the catalog and apply your filters.
+          Configura los parámetros para generar la propuesta. El motor evaluará todas las
+          combinaciones viables de panel/inversor del catálogo y aplicará tus filtros.
         </Text>
 
         <Group grow>
           <NumberInput
-            label="Coverage target"
-            description="Fraction of annual consumption to cover"
-            min={0.1} max={1} step={0.05} decimalScale={2}
-            {...form.getInputProps('coverageTarget')}
+            label="Objetivo de cobertura (%)"
+            description="Porcentaje del consumo anual a cubrir"
+            min={10} max={200} step={5}
+            {...form.getInputProps('energyDemandTargetPct')}
           />
           <NumberInput
-            label="Horizon (years)"
-            description="Analysis period for ROI/NPV"
-            min={5} max={40}
+            label="Horizonte (años)"
+            description="Periodo de análisis para ROI/VPN"
+            min={1} max={50}
             {...form.getInputProps('horizonYears')}
           />
           <NumberInput
-            label="Discount rate"
-            description="WACC for NPV calculation"
-            min={0} max={0.5} step={0.01} decimalScale={3}
-            {...form.getInputProps('discountRate')}
+            label="Tasa de descuento (%)"
+            description="WACC para el cálculo del VPN"
+            min={0} max={50} step={0.5} decimalScale={1}
+            {...form.getInputProps('discountRatePct')}
+          />
+          <NumberInput
+            label="Tarifa eléctrica ($/kWh)"
+            description="Precio por kWh para calcular retorno"
+            min={0} step={0.1} decimalScale={2}
+            placeholder="ej. 2.50"
+            {...form.getInputProps('pricePerKwh')}
           />
         </Group>
 
         <Stack gap="xs">
-          <Text size="sm" fw={500}>Filters</Text>
+          <Text size="sm" fw={500}>Filtros</Text>
           <Checkbox
-            label="Must fit available roof surface"
+            label="Debe caber en la superficie de techo disponible"
             {...form.getInputProps('fitsSurface', { type: 'checkbox' })}
           />
           <Checkbox
-            label="Must meet coverage target"
+            label="Debe cumplir el objetivo de cobertura"
             {...form.getInputProps('meetsTarget', { type: 'checkbox' })}
           />
         </Stack>
 
+        <TextInput
+          label="Marcas permitidas"
+          description="Marcas de panel separadas por comas (vacío para todas)"
+          placeholder="ej. Jinko, Trina, LONGi"
+          {...form.getInputProps('brands')}
+        />
+
         <Group grow>
           <NumberInput
-            label="Min price (€)"
-            placeholder="No minimum"
+            label="Precio mínimo"
+            description="Establece mínimo y máximo para filtrar por precio"
+            placeholder="Sin mínimo"
             min={0}
             {...form.getInputProps('minPrice')}
           />
           <NumberInput
-            label="Max price (€)"
-            placeholder="No maximum"
+            label="Precio máximo"
+            placeholder="Sin máximo"
             min={0}
             {...form.getInputProps('maxPrice')}
           />
         </Group>
 
-        <Radio.Group
-          label="Optimize for"
-          {...form.getInputProps('optimizeFor')}
-        >
+        <Radio.Group label="Optimizar para" {...form.getInputProps('optimizeFor')}>
           <Group mt="xs">
-            {OPTIMIZE_OPTIONS.map(o => (
+            {OPTIMIZE_OPTIONS.map((o) => (
               <Radio key={o.value} value={o.value} label={o.label} />
             ))}
           </Group>
         </Radio.Group>
 
+        {errMsg && (
+          <Alert color="red" title="Error al generar propuesta">
+            {Array.isArray(errMsg) ? errMsg.join('; ') : errMsg}
+          </Alert>
+        )}
+
         <Button type="submit" loading={isPending}>
-          Generate Proposals
+          Generar propuestas
         </Button>
       </Stack>
     </form>

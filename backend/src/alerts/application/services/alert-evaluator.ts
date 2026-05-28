@@ -53,7 +53,7 @@ export class AlertEvaluator {
             body: event.body,
             triggeredAt: event.triggeredAt.toISOString(),
           });
-          await this.notification.push(event.tenantId, event);
+          await this.notification.push(event.tenantId, event, policy.mutedByUsers);
         }
       } catch (err: any) {
         this.logger.error(`Error evaluating policy ${policy.id}: ${err.message}`);

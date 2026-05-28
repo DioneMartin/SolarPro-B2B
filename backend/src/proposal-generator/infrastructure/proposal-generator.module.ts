@@ -4,6 +4,7 @@ import { CatalogModule } from '../../catalog/infrastructure/catalog.module';
 import { DataIngestionModule } from '../../data-ingestion/infrastructure/data-ingestion.module';
 import { SolarCalculationModule } from '../../solar-calculation/infrastructure/solar-calculation.module';
 import { EventBusModule } from '../../shared/event-bus/event-bus.module';
+import { ProjectClientModule } from '../../project-client/infrastructure/project-client.module';
 import { PROPOSAL_REPOSITORY } from '../domain/repositories/proposal.repository';
 import { PDF_RENDERER_PORT } from '../application/ports/pdf-renderer.port';
 import { ProposalQueryFactory } from '../application/factories/proposal-query.factory';
@@ -12,6 +13,7 @@ import { ListProposalsUseCase } from '../application/use-cases/list-proposals.us
 import { GetProposalUseCase } from '../application/use-cases/get-proposal.use-case';
 import { DeleteProposalUseCase } from '../application/use-cases/delete-proposal.use-case';
 import { ExportProposalPdfUseCase } from '../application/use-cases/export-proposal-pdf.use-case';
+import { RejectProposalUseCase } from '../application/use-cases/reject-proposal.use-case';
 import { ProposalOrmEntity } from './persistence/proposal.orm-entity';
 import { TypeOrmProposalRepository } from './persistence/typeorm-proposal.repository';
 import { StubPdfRendererAdapter } from './adapters/stub-pdf-renderer.adapter';
@@ -24,6 +26,7 @@ import { ProposalsController } from './http/proposals.controller';
     DataIngestionModule,
     SolarCalculationModule,
     EventBusModule,
+    ProjectClientModule,
   ],
   controllers: [ProposalsController],
   providers: [
@@ -35,6 +38,7 @@ import { ProposalsController } from './http/proposals.controller';
     GetProposalUseCase,
     DeleteProposalUseCase,
     ExportProposalPdfUseCase,
+    RejectProposalUseCase,
     // Repository
     TypeOrmProposalRepository,
     { provide: PROPOSAL_REPOSITORY, useExisting: TypeOrmProposalRepository },

@@ -1,6 +1,10 @@
-export class InsufficientConsumptionError extends Error {
+import { DomainRuleError } from '../../../shared/errors';
+
+export class InsufficientConsumptionError extends DomainRuleError {
   constructor(monthCount: number) {
-    super(`At least 3 months of consumption data are required; got ${monthCount}.`);
-    this.name = 'InsufficientConsumptionError';
+    super(
+      `Se requieren al menos 3 meses de datos de consumo para el cálculo; ` +
+      `se encontraron ${monthCount}. Agrega más meses antes de generar la propuesta.`,
+    );
   }
 }

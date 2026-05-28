@@ -23,8 +23,10 @@ export class AlertsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const payload = this.jwtService.verify(token);
       const tenantId = payload.tenantId as string;
+      const userId = payload.sub as string;
       await client.join(`tenant:${tenantId}`);
-      this.logger.log(`WS client ${client.id} connected to tenant:${tenantId}`);
+      await client.join(`user:${userId}`);
+      this.logger.log(`WS client ${client.id} connected to tenant:${tenantId} user:${userId}`);
     } catch {
       this.logger.warn(`WS client ${client.id} rejected — invalid token`);
       client.disconnect(true);
@@ -37,5 +39,18 @@ export class AlertsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   pushToTenant(tenantId: string, payload: Record<string, unknown>): void {
     this.server.to(`tenant:${tenantId}`).emit('alert', payload);
+  }
+
+  /** Push to all users in the tenant EXCEPT those in the exclude list. */
+  pushToTenantExcept(tenantId: string, excludeUserIds: string[], payload: Record<string, unknown>): void {
+    if (!excludeUserIds.length) {
+      this.pushToTenant(tenantId, payload);
+      return;
+    }
+    let broadcast = this.server.to(`tenant:${tenantId}`) as any;
+    for (const uid of excludeUserIds) {
+      broadcast = broadcast.except(`user:${uid}`);
+    }
+    broadcast.emit('alert', payload);
   }
 }

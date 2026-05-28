@@ -1,4 +1,5 @@
-import { Injectable, Inject, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { DomainRuleError } from '../../../shared/errors';
 import { v4 as uuidv4 } from 'uuid';
 import { ProposalQueryFactory } from '../factories/proposal-query.factory';
 import type { GenerateProposalInput } from '../factories/proposal-query.factory';
@@ -54,20 +55,29 @@ export class GenerateProposalUseCase {
       this.catalogQuery.listActiveInverters(input.tenantId),
     ]);
 
-    if (panels.length === 0 || inverters.length === 0) {
-      throw new UnprocessableEntityException('Catalog has no active panels or inverters for this tenant.');
+    if (panels.length === 0) {
+      throw new DomainRuleError('El catálogo no tiene paneles activos. Agrega al menos un panel activo antes de generar propuestas.');
+    }
+    if (inverters.length === 0) {
+      throw new DomainRuleError('El catálogo no tiene inversores activos. Agrega al menos un inversor activo antes de generar propuestas.');
     }
 
     // 2. Build query via Builder pattern
     const query = this.factory.fromInput(input);
 
-    // 3. Run the calculation engine
+    // 3. Build effective tariff (user-supplied rate overrides consumption's tariff)
+    const effectiveTariff = consumption.tariff ??
+      (input.pricePerKwh != null
+        ? { currency: panels[0]?.unitCost.currency ?? 'MXN', pricePerKwh: input.pricePerKwh }
+        : undefined);
+
+    // 4. Run the calculation engine
     const candidates = this.engine.calculate({
       projectId: input.projectId,
       tenantId: input.tenantId,
       consumption: {
         months: consumption.months,
-        tariff: consumption.tariff,
+        tariff: effectiveTariff,
       },
       surface: {
         usableSqMeters: surface.usableSqMeters,

@@ -8,6 +8,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import { AuthProvider } from './shared/auth/AuthContext';
 import { AlertsSocket } from './shared/ws/AlertsSocket';
+import { NotificationSocket } from './shared/ws/NotificationSocket';
 import { router } from './app/router';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -46,6 +47,7 @@ createRoot(document.getElementById('root')!).render(
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <AlertsSocket />
+            <NotificationSocket />
             <RouterProvider router={router} />
           </AuthProvider>
         </QueryClientProvider>

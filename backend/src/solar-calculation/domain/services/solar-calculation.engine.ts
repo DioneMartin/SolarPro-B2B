@@ -129,8 +129,37 @@ export class SolarCalculationEngine {
     }
 
     if (candidates.length === 0) {
+      // Diagnose why no combination was viable for a user-friendly message
+      const maxInverterW = sortedInverters.length > 0
+        ? Math.max(...sortedInverters.map(i => i.spec.maxOutputCapacityW))
+        : 0;
+      const minSystemDcW = sortedPanels.length > 0
+        ? Math.min(...sortedPanels.map(panel => {
+            const sz = sizePanels(
+              panel.spec,
+              surface.annualIrradiationKwhPerSqM,
+              parameters.systemLossFactor,
+              requiredAnnualKwh,
+              surface.usableSqMeters,
+            );
+            return sz.panelCount * panel.spec.wattagePeakW;
+          }))
+        : 0;
+
+      const maxAllowedW = maxInverterW * 1.2;
+      if (minSystemDcW > maxAllowedW) {
+        const minKw = (minSystemDcW / 1000).toFixed(1);
+        const maxKw = (maxAllowedW / 1000).toFixed(1);
+        throw new NoViableCombinationError(
+          `La configuración mínima requiere ${minKw} kW CC, ` +
+          `pero el inversor más grande del catálogo solo admite ${maxKw} kW (capacidad × 1.2). ` +
+          `Agrega al catálogo un inversor con mayor capacidad de salida.`,
+        );
+      }
+
       throw new NoViableCombinationError(
-        'No inverter in the catalog can handle any panel configuration.',
+        'Ningún inversor del catálogo es compatible con la configuración de paneles necesaria. ' +
+        'Verifica que los inversores del catálogo tengan la capacidad de salida adecuada.',
       );
     }
 

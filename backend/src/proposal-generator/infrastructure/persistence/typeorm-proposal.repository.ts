@@ -72,4 +72,12 @@ export class TypeOrmProposalRepository implements ProposalRepository {
   async delete(id: string, tenantId: string): Promise<void> {
     await this.ormRepo.delete({ id, tenantId });
   }
+
+  async countByProjectId(projectId: string, tenantId: string): Promise<{ total: number; rejected: number }> {
+    const orms = await this.ormRepo.find({ where: { projectId, tenantId }, select: ['status'] });
+    return {
+      total: orms.length,
+      rejected: orms.filter(o => o.status === ProposalStatus.REJECTED).length,
+    };
+  }
 }

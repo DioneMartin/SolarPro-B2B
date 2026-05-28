@@ -108,6 +108,10 @@ export class Project {
     this.transitionTo(ProjectStatus.APPROVED);
   }
 
+  reject(): void {
+    this.transitionTo(ProjectStatus.REJECTED);
+  }
+
   markInstalled(): void {
     this.transitionTo(ProjectStatus.INSTALLED);
   }

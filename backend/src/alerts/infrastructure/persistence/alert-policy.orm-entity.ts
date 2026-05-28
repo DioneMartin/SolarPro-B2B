@@ -21,6 +21,9 @@ export class AlertPolicyOrmEntity {
   @Column({ type: 'boolean', default: true })
   enabled!: boolean;
 
+  @Column({ name: 'muted_by_users', type: 'jsonb', default: '[]' })
+  mutedByUsers!: string[];
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

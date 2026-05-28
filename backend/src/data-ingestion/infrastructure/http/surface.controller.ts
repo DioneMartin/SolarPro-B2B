@@ -41,6 +41,9 @@ export class SurfaceController {
       id: record.id,
       usableSqMeters: record.estimatedUsableSqMeters,
       annualIrradiation: record.annualIrradiationKwhPerSqM,
+      manualOverride: record.manualOverride,
+      inputAddress: record.inputAddress,
+      coordinates: { lat: record.coordinates.lat, lon: record.coordinates.lon },
     };
   }
 

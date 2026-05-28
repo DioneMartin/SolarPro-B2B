@@ -12,6 +12,6 @@ export class ListPoliciesUseCase {
 
   async execute(tenantId: string, projectId?: string): Promise<AlertPolicy[]> {
     if (projectId) return this.repo.findByProjectId(projectId, tenantId);
-    return this.repo.listEnabled();
+    return this.repo.listAll(tenantId);
   }
 }

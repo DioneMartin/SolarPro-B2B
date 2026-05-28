@@ -72,6 +72,13 @@ export class TimeBasedAlertStrategy implements AlertStrategy {
     const y = now.getFullYear();
     const m = now.getMonth(); // 0-based
 
+    if (item.cron === '* * * * *') {
+      // Every-minute pattern (used for demo / testing): always fire on the current tick.
+      // With leadDays = 0, windowStart == ctx.now, so existsSince will never find a past
+      // event and the alert fires on every evaluator tick.
+      return now;
+    }
+
     if (item.cron === '0 9 1 */3 *') {
       // Quarterly: 1st of Jan, Apr, Jul, Oct
       const quarters = [0, 3, 6, 9];

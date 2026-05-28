@@ -3,8 +3,9 @@ export type AlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
 interface CreateAlertEventProps {
   id: string;
   tenantId: string;
-  policyId: string;
-  projectId: string;
+  /** null for activity-generated events that are not tied to a policy */
+  policyId: string | null;
+  projectId: string | null;
   severity: AlertSeverity;
   title: string;
   body: string;
@@ -21,8 +22,8 @@ export class AlertEvent {
   private constructor(
     readonly id: string,
     readonly tenantId: string,
-    readonly policyId: string,
-    readonly projectId: string,
+    readonly policyId: string | null,
+    readonly projectId: string | null,
     readonly severity: AlertSeverity,
     readonly title: string,
     readonly body: string,

@@ -36,6 +36,7 @@ interface CreateAlertPolicyProps {
 
 interface RehydrateAlertPolicyProps extends CreateAlertPolicyProps {
   enabled: boolean;
+  mutedByUsers: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,6 +49,7 @@ export class AlertPolicy {
     readonly strategyKind: StrategyKind,
     private _config: PolicyConfig,
     private _enabled: boolean,
+    private _mutedByUsers: string[],
     readonly createdAt: Date,
     private _updatedAt: Date,
   ) {}
@@ -61,6 +63,7 @@ export class AlertPolicy {
       props.strategyKind,
       props.config,
       true,
+      [],
       now,
       now,
     );
@@ -74,6 +77,7 @@ export class AlertPolicy {
       props.strategyKind,
       props.config,
       props.enabled,
+      props.mutedByUsers ?? [],
       props.createdAt,
       props.updatedAt,
     );
@@ -85,6 +89,10 @@ export class AlertPolicy {
 
   get enabled(): boolean {
     return this._enabled;
+  }
+
+  get mutedByUsers(): string[] {
+    return [...this._mutedByUsers];
   }
 
   get updatedAt(): Date {
@@ -99,6 +107,25 @@ export class AlertPolicy {
   disable(): void {
     this._enabled = false;
     this._updatedAt = new Date();
+  }
+
+  muteForUser(userId: string): void {
+    if (!this._mutedByUsers.includes(userId)) {
+      this._mutedByUsers.push(userId);
+      this._updatedAt = new Date();
+    }
+  }
+
+  unmuteForUser(userId: string): void {
+    const idx = this._mutedByUsers.indexOf(userId);
+    if (idx >= 0) {
+      this._mutedByUsers.splice(idx, 1);
+      this._updatedAt = new Date();
+    }
+  }
+
+  isMutedForUser(userId: string): boolean {
+    return this._mutedByUsers.includes(userId);
   }
 
   updateConfig(config: PolicyConfig): void {

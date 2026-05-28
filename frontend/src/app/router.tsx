@@ -5,6 +5,7 @@ import { SignupPage } from '../features/auth/pages/SignupPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { ClientsPage } from '../pages/ClientsPage';
 import { ClientDetailPage } from '../pages/ClientDetailPage';
+import { ProjectsPage } from '../pages/ProjectsPage';
 import { ProjectDetailPage } from '../pages/ProjectDetailPage';
 import { CatalogPage } from '../pages/CatalogPage';
 import { ProposalsPage } from '../pages/ProposalsPage';
@@ -23,10 +24,11 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       { path: 'clients', element: <RequireRole roles={['TENANT_ADMIN', 'SOLAR_CONSULTANT']}><ClientsPage /></RequireRole> },
       { path: 'clients/:clientId', element: <RequireRole roles={['TENANT_ADMIN', 'SOLAR_CONSULTANT']}><ClientDetailPage /></RequireRole> },
+      { path: 'projects', element: <RequireRole roles={['TENANT_ADMIN', 'SOLAR_CONSULTANT']}><ProjectsPage /></RequireRole> },
       { path: 'projects/:projectId', element: <RequireRole roles={['TENANT_ADMIN', 'SOLAR_CONSULTANT']}><ProjectDetailPage /></RequireRole> },
       { path: 'catalog', element: <RequireRole roles={['TENANT_ADMIN', 'INVENTORY_MANAGER']}><CatalogPage /></RequireRole> },
       { path: 'proposals', element: <RequireRole roles={['TENANT_ADMIN', 'SOLAR_CONSULTANT']}><ProposalsPage /></RequireRole> },
-      { path: 'alerts', element: <RequireRole roles={['TENANT_ADMIN', 'OPERATIONS']}><AlertsPage /></RequireRole> },
+      { path: 'alerts', element: <RequireRole roles={['TENANT_ADMIN', 'OPERATIONS', 'SOLAR_CONSULTANT', 'INVENTORY_MANAGER']}><AlertsPage /></RequireRole> },
       { path: 'users', element: <RequireRole roles={['TENANT_ADMIN']}><UsersPage /></RequireRole> },
       { path: 'settings', element: <SettingsPage /> },
     ],

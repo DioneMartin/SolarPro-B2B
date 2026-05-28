@@ -10,10 +10,25 @@ export class EnableDisableAlertPolicyUseCase {
     private readonly repo: AlertPolicyRepository,
   ) {}
 
-  async execute(id: string, tenantId: string, enable: boolean): Promise<AlertPolicy> {
+  /**
+   * Per-user mute/unmute. When `mute = true` the user stops receiving
+   * notifications for this policy. The policy itself stays globally enabled.
+   */
+  async execute(
+    id: string,
+    tenantId: string,
+    userId: string,
+    mute: boolean,
+  ): Promise<AlertPolicy> {
     const policy = await this.repo.findById(id, tenantId);
     if (!policy) throw new NotFoundException(`Alert policy ${id} not found.`);
-    enable ? policy.enable() : policy.disable();
+
+    if (mute) {
+      policy.muteForUser(userId);
+    } else {
+      policy.unmuteForUser(userId);
+    }
+
     await this.repo.save(policy);
     return policy;
   }

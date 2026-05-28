@@ -1,4 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, NotFoundException, Param, Post, Put, Res, StreamableFile } from '@nestjs/common';
+import type { Response } from 'express';
+import { BLOB_STORAGE_PORT } from '../../../data-ingestion/application/ports/blob-storage.port';
+import type { BlobStoragePort } from '../../../data-ingestion/application/ports/blob-storage.port';
 import { IsArray, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CurrentUser } from '../../../shared/auth/current-user.decorator';
@@ -10,6 +13,8 @@ import { ListProposalsUseCase } from '../../application/use-cases/list-proposals
 import { GetProposalUseCase } from '../../application/use-cases/get-proposal.use-case';
 import { DeleteProposalUseCase } from '../../application/use-cases/delete-proposal.use-case';
 import { ExportProposalPdfUseCase } from '../../application/use-cases/export-proposal-pdf.use-case';
+import { RejectProposalUseCase } from '../../application/use-cases/reject-proposal.use-case';
+import { toProposalOutput } from '../../application/use-cases/proposal-output.helper';
 import type { CriterionDto } from '../../application/factories/proposal-query.factory';
 
 class CriterionRequestDto implements CriterionDto {
@@ -50,6 +55,9 @@ class GenerateProposalDto {
 
   @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => CriterionRequestDto)
   criteria?: CriterionRequestDto[];
+
+  @IsOptional() @IsNumber() @Min(0)
+  pricePerKwh?: number;
 }
 
 @Controller()
@@ -60,6 +68,8 @@ export class ProposalsController {
     private readonly get: GetProposalUseCase,
     private readonly deleteProposal: DeleteProposalUseCase,
     private readonly exportPdf: ExportProposalPdfUseCase,
+    private readonly rejectProposalUc: RejectProposalUseCase,
+    @Inject(BLOB_STORAGE_PORT) private readonly blobStorage: BlobStoragePort,
   ) {}
 
   @Post('projects/:projectId/proposals')
@@ -69,17 +79,19 @@ export class ProposalsController {
     @Body() dto: GenerateProposalDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.generate.execute({
+    const proposal = await this.generate.execute({
       projectId,
       tenantId: user.tenantId,
       createdBy: user.sub,
       ...dto,
     });
+    return toProposalOutput(proposal);
   }
 
   @Get('proposals')
   async listAll(@CurrentUser() user: JwtPayload) {
-    return this.list.executeAll(user.tenantId);
+    const proposals = await this.list.executeAll(user.tenantId);
+    return proposals.map(toProposalOutput);
   }
 
   @Get('projects/:projectId/proposals')
@@ -87,7 +99,8 @@ export class ProposalsController {
     @Param('projectId') projectId: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.list.execute(projectId, user.tenantId);
+    const proposals = await this.list.execute(projectId, user.tenantId);
+    return proposals.map(toProposalOutput);
   }
 
   @Get('proposals/:id')
@@ -95,7 +108,8 @@ export class ProposalsController {
     @Param('id') id: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.get.execute(id, user.tenantId);
+    const proposal = await this.get.execute(id, user.tenantId);
+    return toProposalOutput(proposal);
   }
 
   @Delete('proposals/:id')
@@ -116,5 +130,32 @@ export class ProposalsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.exportPdf.execute(id, user.tenantId);
+  }
+
+  @Put('proposals/:id/reject')
+  @Roles(Role.SOLAR_CONSULTANT)
+  async reject(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.rejectProposalUc.execute(id, user.tenantId);
+  }
+
+  @Get('proposals/:id/pdf')
+  async downloadPdf(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const proposal = await this.get.execute(id, user.tenantId);
+    if (!proposal.exportedPdfRef) {
+      throw new NotFoundException('PDF no exportado aún. Exporta la propuesta primero.');
+    }
+    const buffer = await this.blobStorage.read(proposal.exportedPdfRef);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="propuesta-${id.slice(0, 8)}.pdf"`,
+    });
+    return new StreamableFile(buffer);
   }
 }
