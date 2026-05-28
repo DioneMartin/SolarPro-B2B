@@ -1,4 +1,4 @@
-import { Stack, Title, Text, Badge, Button, Table, Modal, TextInput, NumberInput, Loader, Center, Group } from '@mantine/core';
+import { Stack, Title, Text, Badge, Button, Table, Modal, TextInput, Loader, Center, Group } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -27,14 +27,14 @@ export function ClientDetailPage() {
   });
 
   const form = useForm({
-    initialValues: { name: '', siteAddress: '', reference: '' },
+    initialValues: { name: '', street: '', city: '', reference: '' },
   });
 
   const { mutate: createProject, isPending } = useMutation({
     mutationFn: (vals: typeof form.values) => projectsApi.create({
       clientId,
       name: vals.name,
-      siteAddress: { street: vals.siteAddress, city: '', state: '', country: '' },
+      siteAddress: { street: vals.street, city: vals.city, state: '', country: '' },
       energyDemandTargetPct: 80,
     }),
     onSuccess: (p) => { qc.invalidateQueries({ queryKey: ['projects'] }); close(); navigate(`/projects/${p.id}`); },
@@ -76,7 +76,8 @@ export function ClientDetailPage() {
         <form onSubmit={form.onSubmit((v) => createProject(v))}>
           <Stack>
             <TextInput label="Project name" required {...form.getInputProps('name')} />
-            <TextInput label="Site address" placeholder="Street, city, state" {...form.getInputProps('siteAddress')} />
+            <TextInput label="Street" placeholder="123 Main St" required {...form.getInputProps('street')} />
+            <TextInput label="City" placeholder="City" required {...form.getInputProps('city')} />
             <TextInput label="Reference" placeholder="Internal reference or notes" {...form.getInputProps('reference')} />
             <Button type="submit" loading={isPending}>Create</Button>
           </Stack>
