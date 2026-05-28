@@ -176,7 +176,11 @@ export function ProjectDetailPage() {
         <Title order={2}>{project?.name}</Title>
         <Badge size="lg" color={STATUS_COLORS[project?.status] ?? 'gray'}>{project?.status}</Badge>
       </Group>
-      <Text c="dimmed">{project?.siteAddress}</Text>
+      <Text c="dimmed">
+        {project?.siteAddress && typeof project.siteAddress === 'object'
+          ? [project.siteAddress.street, project.siteAddress.city].filter(Boolean).join(', ')
+          : project?.siteAddress}
+      </Text>
 
       <Tabs defaultValue="consumption">
         <Tabs.List>

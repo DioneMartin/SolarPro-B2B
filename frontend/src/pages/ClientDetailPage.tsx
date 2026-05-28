@@ -66,7 +66,7 @@ export function ClientDetailPage() {
             <Table.Tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/projects/${p.id}`)}>
               <Table.Td><Text fw={500}>{p.name}</Text></Table.Td>
               <Table.Td><Badge color={STATUS_COLORS[p.status] ?? 'gray'}>{p.status}</Badge></Table.Td>
-              <Table.Td>{p.siteAddress}</Table.Td>
+              <Table.Td>{typeof p.siteAddress === 'object' ? [p.siteAddress.street, p.siteAddress.city].filter(Boolean).join(', ') : p.siteAddress}</Table.Td>
             </Table.Tr>
           ))}
         </Table.Tbody>
