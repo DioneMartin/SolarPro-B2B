@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OcrPort } from '../../application/ports/ocr.port';
 import * as Tesseract from 'tesseract.js';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse: (buf: Buffer) => Promise<{ text: string }> = require('pdf-parse');
+import { PDFParse } from 'pdf-parse';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -28,10 +27,12 @@ export class TesseractOcrAdapter implements OcrPort {
   }
 
   private async extractFromPdf(fullPath: string): Promise<string> {
+    let parser: PDFParse | undefined;
     try {
       const buffer = fs.readFileSync(fullPath);
-      const data = await pdfParse(buffer);
-      const text = data.text?.trim();
+      parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
+      const text = result.text?.trim();
       if (text && text.length > 10) {
         this.logger.log(`pdf-parse extracted ${text.length} chars`);
         return text;
@@ -42,6 +43,8 @@ export class TesseractOcrAdapter implements OcrPort {
     } catch (e: any) {
       this.logger.error(`pdf-parse error: ${e.message}`);
       return 'dummy text format: 2024 01 150\n2024 02 160\n2024 03 170';
+    } finally {
+      await parser?.destroy().catch(() => {});
     }
   }
 
