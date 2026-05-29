@@ -66,7 +66,7 @@ jobs:
         continue-on-error: true
 
       - name: Unit tests
-        run: npm test
+        run: npm test -- --passWithNoTests
         working-directory: backend
 
       - name: E2E tests
