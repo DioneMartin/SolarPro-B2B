@@ -1,8 +1,7 @@
-import { Stack, Title, Text, TextInput, Button, Group, Divider, PasswordInput, Paper } from '@mantine/core';
+import { Stack, Title, Text, TextInput, Button, Group, PasswordInput, Paper } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../shared/auth/AuthContext';
-import { authApi } from '../features/auth/api';
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -54,7 +53,7 @@ export function SettingsPage() {
       <Paper withBorder p="md">
         <Stack>
           <Title order={4}>Change Password</Title>
-          <form onSubmit={passwordForm.onSubmit((v) => {
+          <form onSubmit={passwordForm.onSubmit(() => {
             // PATCH /auth/me/password — placeholder
             passwordForm.reset();
           })}>

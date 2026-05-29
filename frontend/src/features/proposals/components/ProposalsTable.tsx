@@ -29,7 +29,7 @@ export function ProposalsTable({ projectId, projectStatus }: Props) {
     queryFn: () => proposalsApi.listByProject(projectId),
   });
 
-  const { mutate: exportPdf, isPending: exporting } = useMutation({
+  const { isPending: exporting } = useMutation({
     mutationFn: (id: string) => proposalsApi.export(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['proposals', projectId] }),
   });

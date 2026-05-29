@@ -1,19 +1,12 @@
 import {
   Stack, Title, Text, Table, Badge, Button, Group, Modal,
-  TextInput, PasswordInput, Select, Center, Loader, ActionIcon,
+  TextInput, PasswordInput, Select, Center, Loader,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from '@mantine/form';
 import { usersApi } from '../features/users/api';
 import { useAuth } from '../shared/auth/AuthContext';
-
-const ROLE_LABELS: Record<string, string> = {
-  TENANT_ADMIN: 'Admin',
-  SOLAR_CONSULTANT: 'Solar Consultant',
-  INVENTORY_MANAGER: 'Inventory Manager',
-  OPERATIONS: 'Operations',
-};
 
 const ROLE_COLORS: Record<string, string> = {
   TENANT_ADMIN: 'violet',
