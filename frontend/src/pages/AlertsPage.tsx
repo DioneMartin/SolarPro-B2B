@@ -54,6 +54,8 @@ function PoliciesTab() {
     initialValues: {
       projectId: '',
       strategyKind: 'TIME_BASED' as string,
+      lat: 0,
+      lon: 0,
       // WEATHER_BASED fields (lat/lon come from project site address)
       windGustKmhAbove: 80,
       rainMmInDayAbove: 50,
@@ -91,7 +93,11 @@ function PoliciesTab() {
         config,
       });
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['alerts', 'policies'] }); close(); form.reset(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['alerts', 'policies'] });
+      close();
+      form.reset();
+    },
   });
 
   const { mutate: toggleMute } = useMutation({
@@ -219,8 +225,15 @@ function EventsTab({ role }: { role: Role }) {
   const { mutate: ack } = useMutation({
     mutationFn: (id: string) => alertsApi.events.acknowledge(id),
     onSuccess: () => {
+      // Invalida TODAS las variantes de la lista de eventos
+      // (tanto 'unack' como 'all', cualquier filtro activo)
       qc.invalidateQueries({ queryKey: ['alerts', 'events'] });
-      qc.invalidateQueries({ queryKey: ['alerts', 'unack-count'] });
+
+      // Invalida el contador del header, que usa exactamente esta clave
+      // en AppShell.tsx: queryKey: ['alerts', 'events', 'unack']
+      // La invalidación del prefijo ['alerts', 'events'] ya lo cubre,
+      // pero lo hacemos explícito para dejar clara la intención.
+      qc.invalidateQueries({ queryKey: ['alerts', 'events', 'unack'] });
     },
   });
 
