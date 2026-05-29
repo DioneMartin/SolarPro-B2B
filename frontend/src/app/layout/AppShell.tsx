@@ -18,7 +18,7 @@ const navItems = [
 ] as const;
 
 export function AppShellLayout() {
-  const [opened, { toggle }] = useDisclosure();
+  const [opened, { toggle, close }] = useDisclosure();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,6 +30,12 @@ export function AppShellLayout() {
     enabled: !!user,
   });
   const unackCount = unackEvents?.length ?? 0;
+
+  // Navega a la ruta y cierra el navbar (relevante en móvil)
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    close();
+  };
 
   return (
     <MantineAppShell
@@ -46,7 +52,7 @@ export function AppShellLayout() {
           </Group>
           <Group>
             {unackCount > 0 && (
-              <Badge color="red" radius="xl" onClick={() => navigate('/alerts')} style={{ cursor: 'pointer' }}>
+              <Badge color="red" radius="xl" onClick={() => handleNavClick('/alerts')} style={{ cursor: 'pointer' }}>
                 {unackCount} alerta{unackCount !== 1 ? 's' : ''}
               </Badge>
             )}
@@ -64,7 +70,7 @@ export function AppShellLayout() {
             <NavLink
               label={item.label}
               active={location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavClick(item.path)}
               mb={2}
             />
           </RoleGate>
