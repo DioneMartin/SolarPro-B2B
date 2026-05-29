@@ -1,11 +1,9 @@
-import { Stack, Title, Text, Table, Badge, Button, Group, Center, Loader, Select } from '@mantine/core';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { Stack, Title, Text, Table, Badge, Button, Center, Loader } from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { proposalsApi } from '../features/proposals/api';
 
 export function ProposalsPage() {
-  const qc = useQueryClient();
   const navigate = useNavigate();
   const { data: proposals = [], isLoading } = useQuery({
     queryKey: ['proposals', 'all'],
