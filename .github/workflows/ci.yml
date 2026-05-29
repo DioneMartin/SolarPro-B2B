@@ -70,7 +70,7 @@ jobs:
         working-directory: backend
 
       - name: E2E tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --forceExit
         working-directory: backend
 
   frontend-build:
@@ -87,7 +87,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm install
+        run: npm install && npm install --save-dev @types/google.maps
         working-directory: frontend
 
       - name: Lint
