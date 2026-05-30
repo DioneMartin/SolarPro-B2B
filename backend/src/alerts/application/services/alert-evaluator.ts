@@ -4,7 +4,6 @@ import type { AlertPolicyRepository } from '../../domain/repositories/alert-poli
 import { ALERT_EVENT_REPOSITORY } from '../../domain/repositories/alert-event.repository';
 import type { AlertEventRepository } from '../../domain/repositories/alert-event.repository';
 import type { AlertStrategy } from '../../domain/strategies/alert-strategy';
-import { UnknownStrategyError } from '../../domain/errors/unknown-strategy.error';
 import { EVENT_BUS } from '../../../shared/event-bus/event-bus.port';
 import type { EventBus } from '../../../shared/event-bus/event-bus.port';
 import { NOTIFICATION_PORT } from '../ports/notification.port';
@@ -34,13 +33,13 @@ export class AlertEvaluator {
     const ctx = { now: new Date() };
 
     for (const policy of policies) {
-      const strategy = this.strategies.get(policy.strategyKind);
-      if (!strategy) {
-        this.logger.error(`No strategy registered for kind "${policy.strategyKind}" (policy ${policy.id})`);
-        throw new UnknownStrategyError(policy.strategyKind);
-      }
-
       try {
+        const strategy = this.strategies.get(policy.strategyKind);
+        if (!strategy) {
+          this.logger.error(`No strategy registered for kind "${policy.strategyKind}" (policy ${policy.id}) — skipping`);
+          continue;
+        }
+
         const events = await strategy.evaluate(policy, ctx);
         for (const event of events) {
           await this.eventRepo.save(event);
